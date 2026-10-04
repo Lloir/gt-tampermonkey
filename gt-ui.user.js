@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.49
+// @version      0.9.50
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -857,6 +857,12 @@
   html.gtui-embed body #app > main { margin: 0 !important; padding-top: 0 !important; height: 100vh !important; }
   html.gtui-embed body main > .row.h-100 { flex-direction: row; }
   html.gtui-embed body main > .row.h-100 > .col.min-w-0 { max-width: none; width: 100%; }
+
+  .gtui-tr.pend { opacity: .45; }
+  .gtui-tr.pend::before { content: ''; }
+  #gtui-out.busy { outline: 1px solid var(--ui-accent); }
+  #gtui-out .spin { display: inline-block; width: .8em; height: .8em; border: 2px solid var(--ui-dim); border-top-color: var(--ui-accent); border-radius: 50%; animation: gtui-spin .7s linear infinite; vertical-align: -1px; }
+  @keyframes gtui-spin { to { transform: rotate(360deg); } }
 
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
@@ -1776,9 +1782,11 @@
   }
   const base0 = (c) => c.split('-')[0];
   function trShow(el, r) {
-    if (!r || !el.isConnected) return;
+    if (!el.isConnected) return;
+    if (!r) { const ph = el.querySelector(':scope > .gtui-tr.pend'); if (ph) ph.remove(); return; }
     let n = el.querySelector(':scope > .gtui-tr');
     if (!n) { n = document.createElement('div'); n.className = 'gtui-tr'; el.appendChild(n); }
+    if (n.classList.contains('pend')) n.classList.remove('pend');
     if (n.dataset.l !== r.src) n.dataset.l = r.src;
     if (n.textContent !== r.text) n.textContent = r.text;   // only touch the DOM when it changed, or we re-trigger ourselves forever
   }
@@ -1789,7 +1797,13 @@
         try {
           const r = await translateText(job.text, cfg.tlang || 'en');
           tr.cache.set(job.key, r); trShow(job.el, r);
-        } catch (e) { tr.pending.delete(job.key); (tr.failed = tr.failed || {})[job.key] = Date.now(); if (!tr.warned) { tr.warned = 1; console.warn('[gtui] translate failed', e); } }
+        } catch (e) {
+          tr.pending.delete(job.key);
+          const f = (tr.failed = tr.failed || {}), n = (f[job.key] ? f[job.key].n : 0) + 1;
+          f[job.key] = { n, at: Date.now() };
+          if (job.el.isConnected) { const ph = job.el.querySelector(':scope > .gtui-tr.pend'); if (ph && n >= 3) ph.remove(); }
+          if (!tr.warned) { tr.warned = 1; console.warn('[gtui] translate failed', e); }
+        }
         finally { tr.busy--; trPump(); }
       })();
     }
@@ -1808,8 +1822,10 @@
       const key = tl + '|' + text;
       if (tr.cache.has(key)) { trShow(el, tr.cache.get(key)); continue; }
       if (tr.pending.has(key)) continue;
-      if (tr.failed && tr.failed[key] && Date.now() - tr.failed[key] < 30000) continue;
+      const fl = tr.failed && tr.failed[key];
+      if (fl && (fl.n >= 4 || Date.now() - fl.at < 1500 * fl.n)) continue;   // retry a few times with a growing pause, then give up
       tr.pending.add(key);
+      if (!el.querySelector(':scope > .gtui-tr')) { const ph = document.createElement('div'); ph.className = 'gtui-tr pend'; ph.dataset.l = '…'; ph.textContent = 'translating…'; el.appendChild(ph); }
       tr.queue.push({ el, text, key });
     }
     trPump();
@@ -1831,8 +1847,12 @@
     const hit = LANGS.find(([v]) => v.toLowerCase() === c);
     return hit ? { code: hit[0], text: text.slice(0, m.index).trim() } : null;
   }
+  function outBusy(on) {
+    const bar = document.getElementById('gtui-out');
+    if (bar) { bar.classList.toggle('busy', on); const t = bar.querySelector('.tip'); if (t) { if (on) { t.dataset.old = t.innerHTML; t.innerHTML = '<span class="spin"></span> Translating - hold on…'; } else if (t.dataset.old != null) { t.innerHTML = t.dataset.old; delete t.dataset.old; } } }
+  }
   async function sendTagged(ta, tag, resend) {
-    tagBusy = true;
+    tagBusy = true; outBusy(true);
     try {
       const r = tag.code === 'wd' ? toWing(tag.text) : (tag.text ? await webTranslate(tag.text, tag.code, 'auto') : '');
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(ta, r || tag.text);
@@ -1843,18 +1863,24 @@
       ta.dispatchEvent(new Event('input', { bubbles: true }));
     }
     resend();
-    setTimeout(() => { tagBusy = false; }, 50);
+    setTimeout(() => { tagBusy = false; outBusy(false); }, 60);
   }
   document.addEventListener('keydown', (e) => {
+    if (!e.isTrusted) return;   // our own re-sent Enter
     const ta = e.target;
-    if (tagBusy || !cfg.translate || e.key !== 'Enter' || e.shiftKey || !ta || ta.tagName !== 'TEXTAREA' || !ta.closest('main .card-footer')) return;
+    if (e.key !== 'Enter' || e.shiftKey || !ta || ta.tagName !== 'TEXTAREA' || !ta.closest('main .card-footer')) return;
+    if (tagBusy) { e.preventDefault(); e.stopImmediatePropagation(); return; }   // still translating the last one: do not let a second Enter send the raw text
+    if (!cfg.translate) return;
     const tag = tagLang(ta.value); if (!tag) return;
     e.preventDefault(); e.stopImmediatePropagation();
     sendTagged(ta, tag, () => ta.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true })));
   }, true);
   document.addEventListener('click', (e) => {
+    if (!e.isTrusted) return;
     const b = e.target.closest && e.target.closest('main .card-footer button');
-    if (tagBusy || !b || !cfg.translate || b.closest('#gtui-out')) return;
+    if (!b || b.closest('#gtui-out')) return;
+    if (tagBusy) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (!cfg.translate) return;
     const ta = b.closest('.card-footer').querySelector('textarea'); if (!ta) return;
     const tag = tagLang(ta.value); if (!tag) return;
     e.preventDefault(); e.stopImmediatePropagation();
@@ -2365,8 +2391,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.49';
+  const VERSION = '0.9.50';
   const CHANGELOG = {
+    '0.9.50': ['Translation: pressing Enter twice no longer sends the untranslated message first, a "Translating…" indicator while it works, "translating…" placeholders on incoming lines, and failed translations are retried'],
     '0.9.49': ['Settings now has a "Check for updates" button (and a once-a-day heads-up when a new version exists)'],
     '0.9.47': ['Multi-chat now lives inside Comms: press "⊞ Multi-chat" in the chat header'],
     '0.9.45': ['Multi-chat: several channels side by side'],
