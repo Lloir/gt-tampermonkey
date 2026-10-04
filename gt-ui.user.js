@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.42
+// @version      0.9.43
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -771,6 +771,49 @@
   #gtui-buy .act button { background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 6px 16px; cursor: pointer; }
   #gtui-buy .act button.go { background: var(--ui-accent); color: var(--ui-accent-fg); border-color: var(--ui-accent); font-weight: 700; }
 
+  /* ---- QOL pack ---- */
+  #gtui-toasts { position: fixed; right: 16px; bottom: 16px; z-index: 2200; display: flex; flex-direction: column; gap: 8px; max-width: min(380px, 92vw); }
+  #gtui-toasts .t { background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-accent); border-radius: 10px; padding: 10px 14px; box-shadow: 0 10px 28px rgba(0,0,0,.55); cursor: pointer; font-size: .9rem; }
+  #gtui-minfo .rng .al { margin-right: auto; }
+  #gtui-minfo .rng .al.on { border-color: var(--ui-accent); color: var(--ui-hi); }
+  #gtui-qq { display: flex; align-items: center; gap: 6px; margin: 6px 0 8px; font-size: .78rem; color: var(--ui-dim); }
+  #gtui-qq button { background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 6px; padding: 1px 12px; cursor: pointer; }
+  #gtui-qq button:hover { border-color: var(--ui-accent); color: var(--ui-hi); }
+  #gtui-qq small { opacity: .7; }
+  .gtui-wp { display: block; font-size: .72rem; color: var(--ui-dim); font-variant-numeric: tabular-nums; }
+  .gtui-wp.hi { color: #f87171; } .gtui-wp.lo { color: #4ade80; }
+  .gtui-mention { background: rgba(var(--ui-accent-rgb), .16) !important; border-left: 3px solid var(--ui-accent); padding-left: 6px !important; border-radius: 4px; }
+  #gtui-cf { flex: 0 1 190px; min-width: 100px; margin: 0 8px; background: var(--ui-bg); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 3px 10px; font-size: .85rem; }
+  .gtui-fhide, .gtui-old { display: none !important; }
+  main .card-body[data-gtui-hid]::before { content: '↑ ' attr(data-gtui-hid) ' older messages - scroll up to load more'; display: block; text-align: center; color: var(--ui-dim); font-size: .78rem; padding: 6px 0 10px; }
+  html.gtui-dense body .table > :not(caption) > * > * { padding: .16rem .45rem; }
+  html.gtui-dense body #gtui-mlist .r { height: 1.55rem; }
+  html.gtui-dense body .list-group-item { padding-top: .3rem; padding-bottom: .3rem; }
+  html.gtui-dense body .com-group { margin-bottom: 2px; }
+  html.gtui-dense body .com-msg { line-height: 1.2; }
+  html.gtui-roomy body .table > :not(caption) > * > * { padding: .6rem .8rem; }
+  html.gtui-roomy body #gtui-mlist .r { height: 2.5rem; }
+  html.gtui-roomy body .list-group-item { padding-top: .75rem; padding-bottom: .75rem; }
+  html.gtui-roomy body .com-group { margin-bottom: 12px; }
+  html.gtui-roomy body .com-msg { line-height: 1.6; }
+  #gtui-profit { position: fixed; inset: 0; z-index: 2100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.62); }
+  #gtui-profit.open { display: flex; }
+  #gtui-profit .box { width: min(980px, 96vw); max-height: 90vh; display: flex; flex-direction: column; background: var(--ui-panel); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.7); padding: 16px 18px; }
+  #gtui-profit .hd { display: flex; justify-content: space-between; align-items: center; }
+  #gtui-profit h3 { margin: 0; font-size: 1.15rem; color: var(--ui-hi); }
+  #gtui-profit .hd button { background: none; border: 0; color: var(--ui-dim); font-size: 1.1rem; cursor: pointer; }
+  #gtui-profit .ctl { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 10px 0; align-items: center; font-size: .85rem; color: var(--ui-dim); }
+  #gtui-profit .ctl input, #gtui-profit .ctl select { background: var(--ui-bg); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 6px; padding: 3px 8px; }
+  #gtui-profit .wrap { overflow: auto; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-bg); }
+  #gtui-profit table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  #gtui-profit th { position: sticky; top: 0; background: var(--ui-panel-2); text-align: left; padding: 6px 10px; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ui-dim); cursor: pointer; white-space: nowrap; }
+  #gtui-profit th.on { color: var(--ui-hi); }
+  #gtui-profit td { padding: 4px 10px; border-top: 1px solid var(--ui-border); }
+  #gtui-profit .r { text-align: right; font-variant-numeric: tabular-nums; }
+  #gtui-profit .up { color: #4ade80; } #gtui-profit .dn { color: #f87171; }
+  #gtui-profit small { opacity: .6; }
+  #gtui-profit .msg { margin: 10px 0 0; font-size: .78rem; color: var(--ui-dim); }
+
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
   @media (min-width: 2200px) {
@@ -850,7 +893,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.42';
+    v.textContent = 'Sleek UI v0.9.43';
     bar.appendChild(v);
   }
 
@@ -961,6 +1004,7 @@
       .filter(([, label]) => !q || label.toLowerCase().includes(q))
       .map(([id, label]) => ({ label, hint: 'screen', run: () => { const l = navLink(id); if (l) l.click(); } }));
     if (!q || 'settings theme options hide images'.includes(q)) palItems.push({ label: 'Settings – themes & hide images', hint: 'sleek ui', run: openSettings });
+    if (!q || 'profit production calculator'.includes(q)) palItems.push({ label: 'Production profit calculator', hint: 'sleek ui', run: openProfit });
     LINKS.forEach((l) => { if (!q || l.label.toLowerCase().includes(q)) palItems.push({ label: l.label + ' ↗', hint: 'link', run: () => window.open(l.url, '_blank', 'noopener') }); });
     if (q) palItems.push({ label: 'Search market for “' + palIn.value.trim() + '”', hint: 'exchange', run: () => searchMarket(palIn.value.trim()) });
     palSel = q && palItems.length > 1 && !palItems[0].label.toLowerCase().startsWith(q) ? palItems.length - 1 : 0;
@@ -1032,6 +1076,7 @@
     try {
       const j = await apiGet('/public/exchange/mat-prices');
       mk.prices = new Map(j.prices.map((p) => [norm(p.matName), p]));
+      mk.byId = new Map(j.prices.map((p) => [p.matId, p]));
       mk.pricesAt = Date.now();
       mk.ok = true;
     } catch (e) {
@@ -1124,6 +1169,7 @@
         return (x - y) * dir;
       });
     }
+    if (!k && cfg.favFirst !== false) { const f = items.filter((x) => x.fav), o = items.filter((x) => !x.fav); items.length = 0; items.push(...f, ...o); }
     const sig = [k, desc, mk.pricesAt, mk.ok, items.map((x) => x.name + x.low + x.sel + x.fav + x.sell).join('|')].join('#');
     if (sig === mk.listSig) return;
     mk.listSig = sig;
@@ -1188,9 +1234,10 @@
     const nameEl = trade && trade.querySelector('.card-header .h5');
     if (!row || !nameEl) { if (card) card.remove(); mk.infoSig = ''; return; }
     const name = nameEl.textContent.trim();
+    mk.curName = name;
     const p = mk.prices.get(norm(name));
     const d = p ? loadDetails(p.matId) : null;
-    const sig = [name, p && p.currentPrice, d && d.at, d && d.err, mk.range, mk.ok].join('#');
+    const sig = [name, (cfg.alerts || []).map((x) => x.n + x.p).join(), p && p.currentPrice, d && d.at, d && d.err, mk.range, mk.ok].join('#');
     if (card && card.parentElement === row && sig === mk.infoSig) return;
     if (!card || card.parentElement !== row) {
       if (card) card.remove();
@@ -1199,6 +1246,7 @@
       row.append(card);
       card.addEventListener('click', (e) => {
         const b = e.target.closest('.rng button');
+        if (b && b.dataset.al) { setAlert(mk.curName); return; }
         if (b) { mk.range = +b.dataset.r; sset('gtui:mrange', mk.range); mk.infoSig = ''; schedule(); }
       });
       card.addEventListener('mousemove', (e) => {
@@ -1247,7 +1295,7 @@
       stat('7-day change', ch7 == null ? '–' : '<span class="' + (ch7 > 0 ? 'up' : 'dn') + '">' + pct(ch7) + '</span>') +
       stat('Sold per day', data && data.avgQtySoldDaily != null ? Math.round(data.avgQtySoldDaily).toLocaleString() : '–') +
       stat('Next offer', second != null ? money(second) + '$' : '–') + '</div>' +
-      '<div class="rng">' + ranges.map((r) => rb(r, r + 'd')).join('') + rb(0, days ? 'All (' + days + 'd)' : 'All') + '</div>' +
+      '<div class="rng">' + alertBtn(name) + ranges.map((r) => rb(r, r + 'd')).join('') + rb(0, days ? 'All (' + days + 'd)' : 'All') + '</div>' +
       '<div class="chart"></div>';
     const holder = card.querySelector('.chart');
     mk.cw = Math.round(holder.clientWidth) || 640;
@@ -1325,7 +1373,7 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], buyAll: true, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
   const hexRgb = (h) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [124, 92, 255]; };
   const CUSTOM_KEYS = [['bg', 'Page background'], ['panel', 'Panels'], ['p2', 'Raised panels / hover'], ['border', 'Borders'], ['fg', 'Text'], ['dim', 'Dim text'], ['accent', 'Accent']];
@@ -1357,6 +1405,8 @@
     root.classList.toggle('gtui-hide-stats', !cfg.showStats);
     root.classList.toggle('gtui-hide-pills', !cfg.showPills);
     root.classList.toggle('gtui-hide-keys', !cfg.showKeys);
+    root.classList.toggle('gtui-dense', cfg.density === 'compact');
+    root.classList.toggle('gtui-roomy', cfg.density === 'roomy');
     root.classList.toggle('gtui-chat-right', cfg.chatSide === 'right');
     root.classList.toggle('gtui-hide-contacts', !!cfg.hideContacts);
     root.classList.toggle('gtui-chan-auto', cfg.chanMode === 'auto' || cfg.chanMode === 'compact');
@@ -1410,11 +1460,25 @@
       '<div class="note">Translation sends message text to Google Translate (Chrome 138+ translates on-device instead). Off by default.</div>' +
       '<div class="sec">Exchange</div>' +
       chk('buyAll', 'Show "Buy all" button on the wishlist') +
+      chk('quickQty', 'Quick quantity buttons (¼ ½ Max) on the buy form') +
+      chk('wishPrices', 'Show prices next to wishlist items') +
+      chk('favFirst', 'Favourites first in the market list') +
+      '<div class="sec">Price alerts</div>' +
+      '<div class="blist">' + ((cfg.alerts || []).length ? cfg.alerts.map((x) => '<span class="bchip">' + esc(x.n) + ' ≤ ' + money(x.p) + '$<button type="button" data-a="al-del" data-n="' + esc(x.n) + '" title="Remove">✕</button></span>').join('') : '<span class="note" style="margin:0">None yet. Open an item on the Exchange and press the 🔔 Alert button.</span>') + '</div>' +
+      chk('sound', 'Play a sound for alerts and chat mentions') +
+      '<div class="sec">Chat alerts and history</div>' +
+      '<label class="rw"><span>Highlight words</span><input type="text" data-k="mentions" value="' + esc(cfg.mentions || '') + '" placeholder="comma separated" style="width:150px"></label>' +
+      '<div class="note" style="margin-top:0">Your company name is always included. Mentions get highlighted, and show in the tab title when the tab is in the background.</div>' +
+      '<label class="rw"><span>Keep chat history light</span><select data-k="histN">' +
+      [['0', 'Off (show everything)'], ['100', 'Newest 100, load more on scroll'], ['200', 'Newest 200, load more on scroll'], ['400', 'Newest 400, load more on scroll']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.histN) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       '<div class="sec">Interface</div>' +
+      '<label class="rw"><span>Row density</span><select data-k="density">' +
+      [['compact', 'Compact'], ['normal', 'Normal'], ['roomy', 'Roomy']].map(([v, l]) => '<option value="' + v + '"' + (cfg.density === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      chk('numKeys', 'Number keys 1-9 jump between screens') +
       '<label class="rw"><span>UI size</span><select data-k="size">' +
       [['', 'Auto (by screen)'], ['14', 'Small'], ['16', 'Normal'], ['18', 'Large'], ['20', 'Extra large'], ['22', 'Huge']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.size) === v ? ' selected' : '') + '>' + l + '</option>').join('') +
       '</select></label>' +
-      '<div class="note">Settings are saved in this browser. <button type="button" class="sm" data-a="reset-all">Reset all</button></div>';
+      '<div class="note">Settings are saved in this browser. <button type="button" class="sm" data-a="set-export">Export</button> <button type="button" class="sm" data-a="set-import">Import</button> <button type="button" class="sm" data-a="reset-all">Reset all</button><input type="file" accept=".json,application/json" data-f="settings" hidden></div>';
   }
   function addBlock(raw) {
     const n = String(raw || '').replace(/^\s*\[[^\]]*\]\s*/, '').trim();   // ignore a leading [TAG]
@@ -1462,6 +1526,12 @@
       }
       else if (a.dataset.a === 'b-add') { addBlock((setPanel.querySelector('[data-b="in"]') || {}).value); renderSettings(); }
       else if (a.dataset.a === 'b-del') { cfg.blocked = (cfg.blocked || []).filter((n) => n !== a.dataset.n); saveCfg(); renderSettings(); }
+      else if (a.dataset.a === 'al-del') { cfg.alerts = (cfg.alerts || []).filter((x) => x.n !== a.dataset.n); saveCfg(); renderSettings(); }
+      else if (a.dataset.a === 'set-export') {
+        const url = URL.createObjectURL(new Blob([JSON.stringify({ gtuiSettings: 1, cfg }, null, 2)], { type: 'application/json' }));
+        const dl = document.createElement('a'); dl.href = url; dl.download = 'gt-sleek-ui-settings.json'; document.body.appendChild(dl); dl.click(); dl.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      } else if (a.dataset.a === 'set-import') { const f = setPanel.querySelector('[data-f="settings"]'); if (f) f.click(); }
       else if (a.dataset.a === 'accent-reset') { cfg.accent = ''; saveCfg(); renderSettings(); }
       else if (a.dataset.a === 'reset-all') { cfg = Object.assign({}, CFG_DEFAULT); saveCfg(); renderSettings(); }
     });
@@ -1476,6 +1546,14 @@
     });
     setPanel.addEventListener('change', (e) => {
       const f = e.target;
+      if (f.dataset && f.dataset.f === 'settings' && f.files && f.files[0]) {
+        f.files[0].text().then((txt) => {
+          const o = JSON.parse(txt);
+          if (!o || !o.cfg || typeof o.cfg !== 'object') throw new Error('bad');
+          cfg = Object.assign({}, CFG_DEFAULT, o.cfg); saveCfg(); renderSettings();
+        }).catch(() => window.alert('That does not look like a Sleek UI settings file.'));
+        return;
+      }
       if (!f.dataset || f.dataset.f !== 'themes' || !f.files || !f.files[0]) return;
       f.files[0].text().then((txt) => {
         const o = JSON.parse(txt); let n = 0;
@@ -1837,13 +1915,14 @@
     while (Date.now() - t0 < (ms || 4000)) { const v = fn(); if (v) return v; await sleep(step || 30); }
     return null;
   }
+  function cleanName(td) { if (!td) return ''; const c = td.cloneNode(true); c.querySelectorAll('.gtui-wp').forEach((n) => n.remove()); return c.textContent.trim().replace(/\s+/g, ' '); }
   const wishPanel = () => document.getElementById('exchangeMaterialsPanel');
   const wishActive = () => { const p = wishPanel(); return !!(p && p.querySelector('[data-popup-id="editWishlistExchange"]')); };
   function wishRows() {
     const p = wishPanel(); if (!p) return [];
     return [...p.querySelectorAll('tbody tr[role="button"]')].map((el) => {
       const inp = el.querySelector('input[type="number"]');
-      return { el, name: (el.querySelector('td') || {}).textContent.trim().replace(/\s+/g, ' '), qty: inp ? parseInt(inp.value, 10) || 0 : 0 };
+      return { el, name: cleanName(el.querySelector('td')), qty: inp ? parseInt(inp.value, 10) || 0 : 0 };
     }).filter((r) => r.name && r.qty > 0);
   }
   const tradeName = () => { const h = document.querySelector('#exchangeTradeMatCard .card-header .h5'); return h ? h.textContent.trim() : ''; };
@@ -1885,9 +1964,11 @@
   function openBuyAll() {
     const rows = wishRows(); if (!rows.length) return;
     const d = buyDialog();
+    const est = wishEstimate(rows);
     const cost = [...wishPanel().querySelectorAll('.input-group-text span')].map((x) => x.textContent.trim().replace(/\s+/g, ' ')).join('  ·  ');
     d.innerHTML = '<div class="box"><h3>Buy everything on this wishlist?</h3>' +
       '<div class="sub">' + esc(cost) + '</div>' +
+      (est.low ? '<div class="sub">≈ ' + money(est.low) + '$ at the lowest offers now' + (est.avg ? '  (average-price total ' + money(est.avg) + '$)' : '') + (est.miss ? '  ·  ' + est.miss + ' item(s) without a price' : '') + '</div>' : '') +
       '<div class="lst">' + rows.map((r, i) => '<div class="it" data-i="' + i + '"><span class="st">·</span><span class="n">' + esc(r.name) + '</span><b>' + r.qty.toLocaleString() + '</b></div>').join('') + '</div>' +
       '<div class="msg">Items are bought one after another using the game\'s own Buy button, at the current best offers. You can stop at any time; anything already bought stays bought.</div>' +
       '<div class="act"><button type="button" data-a="cancel">Cancel</button><button type="button" class="go" data-a="go">Buy ' + rows.length + ' item' + (rows.length > 1 ? 's' : '') + '</button></div></div>';
@@ -1935,7 +2016,302 @@
     buyRun = null;
   }
 
+  /* ================= QOL pack: alerts, quick buy, wishlist prices, mentions, chat tools, profit calculator ================= */
+  function toast(msg, ms) {
+    let box = document.getElementById('gtui-toasts');
+    if (!box) { box = document.createElement('div'); box.id = 'gtui-toasts'; document.body.appendChild(box); }
+    const t = document.createElement('div'); t.className = 't'; t.textContent = msg; box.appendChild(t);
+    setTimeout(() => t.remove(), ms || 6000);
+    t.addEventListener('click', () => t.remove());
+  }
+  let baseTitle = null, unread = 0;
+  function bumpTitle(n) {
+    if (baseTitle == null) baseTitle = document.title.replace(/^\(\d+\)\s*/, '');
+    document.title = n ? '(' + n + ') ' + baseTitle : baseTitle;
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && unread) { unread = 0; bumpTitle(0); } });
+  function beep() {
+    if (!cfg.sound) return;
+    try {
+      const C = window.AudioContext || window.webkitAudioContext, a = new C(), o = a.createOscillator(), g = a.createGain();
+      o.connect(g); g.connect(a.destination); o.frequency.value = 880;
+      g.gain.setValueAtTime(0.08, a.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.25);
+      o.start(); o.stop(a.currentTime + 0.26);
+    } catch (e) { /* no audio */ }
+  }
+  function desktopNote(msg) {
+    try { if ('Notification' in window && Notification.permission === 'granted' && document.hidden) new Notification('Galactic Tycoons', { body: msg }); } catch (e) { /* ignore */ }
+  }
+
+  /* --- price alerts --- */
+  const alertFor = (name) => (cfg.alerts || []).find((a) => a.n === name);
+  function alertBtn(name) {
+    const a = alertFor(name);
+    return '<button type="button" data-al="1" class="al' + (a ? ' on' : '') + '">🔔 ' + (a ? '≤ ' + money(a.p) + '$' : 'Alert') + '</button>';
+  }
+  function setAlert(name) {
+    if (!name) return;
+    const p = mk.prices.get(norm(name)), cur = p && p.currentPrice > 0 ? p.currentPrice : null, ex = alertFor(name);
+    const v = window.prompt('Alert me when the lowest offer for ' + name + ' is at or below this price (currently ' + (cur ? money(cur) + '$' : 'unknown') + ').\nLeave empty to remove the alert.',
+      ex ? (ex.p / 100).toFixed(2) : cur ? (cur * 0.95 / 100).toFixed(2) : '');
+    if (v === null) return;
+    const n = parseFloat(String(v).replace(/,/g, ''));
+    cfg.alerts = (cfg.alerts || []).filter((a) => a.n !== name);
+    if (isFinite(n) && n > 0) {
+      cfg.alerts.push({ n: name, p: Math.round(n * 100), armed: true });
+      try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) { /* ignore */ }
+    }
+    saveCfg(); mk.infoSig = ''; schedule();
+  }
+  function checkAlerts() {
+    let dirty = false;
+    (cfg.alerts || []).forEach((a) => {
+      const p = mk.prices.get(norm(a.n));
+      if (!p || !(p.currentPrice > 0)) return;
+      if (p.currentPrice <= a.p) {
+        if (a.armed !== false) { a.armed = false; dirty = true; const m = a.n + ' is at ' + money(p.currentPrice) + '$  (alert: ≤ ' + money(a.p) + '$)'; toast('🔔 ' + m, 12000); desktopNote(m); beep(); if (document.hidden) { unread++; bumpTitle(unread); } }
+      } else if (a.armed === false && p.currentPrice > a.p * 1.02) { a.armed = true; dirty = true; }
+    });
+    if (dirty) saveCfg();
+  }
+  async function alertTick() {
+    if (!(cfg.alerts || []).length) return;
+    await loadPrices();
+    checkAlerts();
+  }
+  setInterval(alertTick, 60000);
+  setTimeout(alertTick, 6000);
+
+  /* --- quick quantity buttons on the buy form --- */
+  function syncQuick() {
+    const trade = document.getElementById('exchangeTradeMatCard'), inp = document.getElementById('inputQuantity');
+    let q = document.getElementById('gtui-qq');
+    if (!cfg.quickQty || !trade || !inp) { if (q) q.remove(); return; }
+    const grp = inp.closest('.input-group') || inp.parentElement;
+    if (!q) {
+      q = document.createElement('div'); q.id = 'gtui-qq';
+      q.innerHTML = '<span>Quick</span><button type="button" data-f="0.25">¼</button><button type="button" data-f="0.5">½</button><button type="button" data-f="1">Max</button><small>of what you can afford</small>';
+      q.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) quickFill(parseFloat(b.dataset.f)); });
+    }
+    if (q.previousElementSibling !== grp) grp.after(q);
+    const sellTab = !!trade.querySelector('.nav-link.link-danger.active');
+    q.style.display = sellTab ? 'none' : '';
+  }
+  function quickFill(f) {
+    const trade = document.getElementById('exchangeTradeMatCard'), inp = document.getElementById('inputQuantity');
+    const pill = document.querySelector('#app > nav.navbar .btn-group .btn-outline-success');
+    const cash = pill ? parseInt(pill.textContent.replace(/[^0-9]/g, ''), 10) : NaN;
+    if (!trade || !inp || !isFinite(cash)) return;
+    let budget = cash * f, qty = 0;
+    for (const tr of trade.querySelectorAll('table tbody tr')) {
+      const td = tr.querySelectorAll('td'); if (td.length < 3) continue;
+      const have = parseInt(td[1].textContent.replace(/[^0-9]/g, ''), 10), price = parseFloat(td[2].textContent.replace(/[^0-9.]/g, ''));
+      if (!(have > 0) || !(price > 0)) continue;
+      const take = Math.min(have, Math.floor(budget / price));
+      qty += take; budget -= take * price;
+      if (take < have) break;
+    }
+    if (qty < 1) { toast('Not enough money for even one unit.', 3000); return; }
+    setNum(inp, Math.min(qty, 100000000));
+  }
+
+  /* --- wishlist: price of each item next to it --- */
+  function syncWishPrices() {
+    if (!cfg.wishPrices || !wishActive()) { document.querySelectorAll('.gtui-wp').forEach((n) => n.remove()); return; }
+    loadPrices();
+    wishRows().forEach((r) => {
+      const td = r.el.querySelector('td'); if (!td) return;
+      const p = mk.prices.get(norm(r.name));
+      let sp = td.querySelector('.gtui-wp');
+      if (!p || !(p.currentPrice > 0)) { if (sp) sp.remove(); return; }
+      const d = p.avgPrice > 0 ? (p.currentPrice - p.avgPrice) / p.avgPrice : null;
+      const txt = money(p.currentPrice) + '$' + (d != null ? '  ' + pct(d) : '');
+      const cls = 'gtui-wp' + (d != null && d > 0.1 ? ' hi' : d != null && d < -0.05 ? ' lo' : '');
+      if (!sp) { sp = document.createElement('small'); td.appendChild(sp); }
+      if (sp.className !== cls) sp.className = cls;
+      if (sp.textContent !== txt) sp.textContent = txt;
+    });
+  }
+  function wishEstimate(rows) {
+    let low = 0, avg = 0, miss = 0;
+    rows.forEach((r) => { const p = mk.prices.get(norm(r.name)); if (p && p.currentPrice > 0) { low += p.currentPrice * r.qty; avg += (p.avgPrice > 0 ? p.avgPrice : p.currentPrice) * r.qty; } else miss++; });
+    return { low, avg, miss };
+  }
+
+  /* --- chat: mentions, filter, light history --- */
+  const seenMsg = new WeakSet();
+  let mentionInit = false;
+  const meName = () => { const li = document.querySelector('#app > nav.navbar .dropdown-menu > li.dropdown-item[translate="no"]'); return li ? li.textContent.trim() : ''; };
+  function syncMentions() {
+    const msgs = [...document.querySelectorAll('main .com-msg')];
+    if (!msgs.length) return;
+    const me = meName();
+    const kws = String(cfg.mentions || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+    if (me) kws.push(me.toLowerCase());
+    if (!kws.length) return;
+    let fresh = 0, news = 0, firstFresh = '';
+    msgs.forEach((el) => {
+      const isNew = !seenMsg.has(el); if (isNew) { seenMsg.add(el); news++; }
+      const grp = el.closest('.com-group'), hb = grp && grp.querySelector('.com-header b');
+      const own = me && hb && hb.textContent.trim() === me;
+      const c = el.cloneNode(true); c.querySelectorAll('.gtui-tr').forEach((n) => n.remove());
+      const txt = c.textContent.toLowerCase();
+      const hit = !own && kws.some((k) => txt.includes(k));
+      if (el.classList.contains('gtui-mention') !== hit) el.classList.toggle('gtui-mention', hit);
+      if (hit && isNew) { fresh++; if (!firstFresh) firstFresh = (hb ? hb.textContent.trim() + ': ' : '') + c.textContent.trim().slice(0, 80); }
+    });
+    if (!mentionInit) { mentionInit = true; return; }
+    if (fresh && news <= 6) {   // a big batch means we just opened a channel, not new messages
+      beep();
+      if (document.hidden) { unread += fresh; bumpTitle(unread); desktopNote(firstFresh); }
+    }
+  }
+  let chatFilter = '';
+  function ensureChatFilter() {
+    const hd = document.querySelector('main .row.h-100 > .col.min-w-0 .card-header');
+    let f = document.getElementById('gtui-cf');
+    if (!hd) { if (f) f.remove(); return; }
+    if (!f) {
+      f = document.createElement('input'); f.id = 'gtui-cf'; f.type = 'search'; f.placeholder = 'Filter this chat…'; f.value = chatFilter; f.autocomplete = 'off';
+      f.addEventListener('input', () => { chatFilter = f.value.trim().toLowerCase(); applyChatFilter(); });
+    }
+    if (f.parentElement !== hd) hd.insertBefore(f, hd.querySelector('.card-actions') || null);
+  }
+  function applyChatFilter() {
+    document.querySelectorAll('main .com-group').forEach((g) => {
+      const hb = g.querySelector('.com-header b'), who = hb ? hb.textContent.toLowerCase() : '';
+      let any = false;
+      g.querySelectorAll('.com-msg').forEach((m) => {
+        const show = !chatFilter || who.includes(chatFilter) || m.textContent.toLowerCase().includes(chatFilter);
+        if (m.classList.contains('gtui-fhide') === show) m.classList.toggle('gtui-fhide', !show);
+        if (show) any = true;
+      });
+      if (g.classList.contains('gtui-fhide') === any) g.classList.toggle('gtui-fhide', !any);
+    });
+  }
+  let histLimit = 0, histChan = '', histBody = null;
+  function chatBody() { return document.querySelector('main .row.h-100 > .col.min-w-0 .card-body.overflow-y-auto'); }
+  function syncHistory() {
+    const body = chatBody(), n = parseInt(cfg.histN, 10) || 0;
+    if (!body || !n) { document.querySelectorAll('.gtui-old').forEach((g) => g.classList.remove('gtui-old')); if (body) body.removeAttribute('data-gtui-hid'); return; }
+    const chan = (document.querySelector('main .row.h-100 .list-group-item.active[data-channel-id]') || {}).dataset;
+    const cid = chan ? chan.channelId : '';
+    if (cid !== histChan || body !== histBody) { histChan = cid; histBody = body; histLimit = n; body.onscroll = onHistScroll; body.onwheel = (e) => { if (e.deltaY < 0 && body.scrollTop <= 0) onHistScroll({ currentTarget: body }); }; }
+    if (!histLimit) histLimit = n;
+    applyHistory(body, false);
+  }
+  function applyHistory(body, keepTop) {
+    const groups = [...body.querySelectorAll(':scope > .com-group')];
+    let count = 0, hidden = 0;
+    const before = body.scrollHeight, atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+    for (let i = groups.length - 1; i >= 0; i--) {
+      const c = groups[i].querySelectorAll('.com-msg').length || 1;
+      const old = count >= histLimit;
+      if (groups[i].classList.contains('gtui-old') !== old) groups[i].classList.toggle('gtui-old', old);
+      if (old) hidden += c; else count += c;
+    }
+    const label = hidden ? String(hidden) : '';
+    if (label) { if (body.dataset.gtuiHid !== label) body.dataset.gtuiHid = label; } else body.removeAttribute('data-gtui-hid');
+    if (!atBottom && !keepTop) { const d = before - body.scrollHeight; if (d) body.scrollTop -= d; }
+  }
+  function onHistScroll(e) {
+    const body = e.currentTarget, n = parseInt(cfg.histN, 10) || 0;
+    if (!n || body.scrollTop > 40 || !body.querySelector(':scope > .gtui-old')) return;
+    const h0 = body.scrollHeight;
+    histLimit += n;
+    applyHistory(body, true);
+    body.scrollTop = body.scrollHeight - h0;   // stay on the same message
+  }
+
+  /* --- number keys: jump to a screen --- */
+  document.addEventListener('keydown', (e) => {
+    if (!cfg.numKeys || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !/^[1-9]$/.test(e.key)) return;
+    const t = e.target;
+    if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+    if (document.querySelector('.modal.show, #gtui-pal.open, #gtui-buy.open, #gtui-profit.open')) return;
+    const links = [...document.querySelectorAll('#app > nav.navbar .navbar-menu > .nav-link')].filter((a) => a.id !== 'gtui-notes-nav' && a.id !== 'gtui-profit-nav');
+    const l = links[+e.key - 1];
+    if (l) { l.click(); e.preventDefault(); }
+  });
+
+  /* --- production profit calculator (static game data + live prices) --- */
+  const gd = { data: null, loading: false, err: false };
+  const pf = { inMode: 'low', outMode: 'avg', q: '', b: '', k: 'ph', desc: true };
+  async function loadGame() {
+    if (gd.data || gd.loading) return;
+    gd.loading = true;
+    try { gd.data = await apiGet('/gamedata.json'); } catch (e) { gd.err = true; }
+    gd.loading = false; renderProfit();
+  }
+  function profitRows() {
+    const g = gd.data; if (!g || !mk.byId) return [];
+    const mat = new Map(g.materials.map((m) => [m.id, m.sName || m.name])), bld = new Map(g.buildings.map((b) => [b.id, b.name]));
+    const price = (id, mode) => { const p = mk.byId.get(id); if (!p) return null; const v = mode === 'avg' ? p.avgPrice : p.currentPrice; return v > 0 ? v : (p.avgPrice > 0 ? p.avgPrice : (p.currentPrice > 0 ? p.currentPrice : null)); };
+    const out = [];
+    g.recipes.forEach((r) => {
+      if (!r.output || !(r.output.a > 0) || !(r.timeMinutes > 0)) return;
+      let cost = 0;
+      for (const i of r.inputs || []) { const pr = price(i.i, pf.inMode); if (pr == null) return; cost += pr * i.a; }
+      const op = price(r.output.i, pf.outMode); if (op == null) return;
+      const rev = op * r.output.a, profit = rev - cost;
+      out.push({ name: mat.get(r.output.i) || ('#' + r.output.i), bld: bld.get(r.producedIn) || '', bid: r.producedIn, min: r.timeMinutes, amt: r.output.a, cost, rev, profit, ph: profit / (r.timeMinutes / 60), margin: cost > 0 ? profit / cost : null });
+    });
+    return out;
+  }
+  function openProfit() {
+    let d = document.getElementById('gtui-profit');
+    if (!d) {
+      d = document.createElement('div'); d.id = 'gtui-profit'; document.body.appendChild(d);
+      d.addEventListener('click', (e) => {
+        if (e.target === d || e.target.closest('[data-a="x"]')) { d.classList.remove('open'); return; }
+        const h = e.target.closest('th[data-k]');
+        if (h) { if (pf.k === h.dataset.k) pf.desc = !pf.desc; else { pf.k = h.dataset.k; pf.desc = h.dataset.k !== 'name' && h.dataset.k !== 'bld'; } renderProfit(); }
+      });
+      d.addEventListener('input', (e) => {
+        const el = e.target; if (!el.dataset.p) return;
+        pf[el.dataset.p] = el.value; renderProfit(el.dataset.p === 'q');
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && d.classList.contains('open')) d.classList.remove('open'); });
+    }
+    d.classList.add('open');
+    loadPrices(); loadGame(); renderProfit();
+  }
+  function renderProfit(keepFocus) {
+    const d = document.getElementById('gtui-profit'); if (!d || !d.classList.contains('open')) return;
+    const rows = profitRows().filter((r) => (!pf.q || r.name.toLowerCase().includes(pf.q.toLowerCase())) && (!pf.b || String(r.bid) === pf.b));
+    const { k, desc } = pf, dir = desc ? -1 : 1;
+    rows.sort((a, b) => (k === 'name' || k === 'bld' ? String(a[k]).localeCompare(String(b[k])) : ((a[k] == null ? -Infinity : a[k]) - (b[k] == null ? -Infinity : b[k]))) * dir);
+    const bs = gd.data ? [...new Map(gd.data.buildings.map((b) => [b.id, b.name]))] : [];
+    const th = (key, label, cls) => '<th data-k="' + key + '" class="' + (cls || '') + (pf.k === key ? ' on' : '') + '">' + label + (pf.k === key ? (pf.desc ? ' ▼' : ' ▲') : '') + '</th>';
+    const sel = (p, opts) => '<select data-p="' + p + '">' + opts.map(([v, l]) => '<option value="' + v + '"' + (pf[p] === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>';
+    const focus = keepFocus ? d.querySelector('input[data-p="q"]') : null, pos = focus ? focus.selectionStart : 0;
+    d.innerHTML = '<div class="box"><div class="hd"><h3>Production profit</h3><button type="button" data-a="x" title="Close">✕</button></div>' +
+      '<div class="ctl"><input type="search" data-p="q" placeholder="Search product…" value="' + esc(pf.q) + '">' +
+      '<select data-p="b"><option value="">All buildings</option>' + bs.map(([id, n]) => '<option value="' + id + '"' + (pf.b === String(id) ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select>' +
+      '<label>Inputs at ' + sel('inMode', [['low', 'lowest offer'], ['avg', 'average']]) + '</label><label>Output at ' + sel('outMode', [['avg', 'average'], ['low', 'lowest offer']]) + '</label></div>' +
+      (gd.err ? '<div class="msg">Could not load the game data.</div>' : !gd.data || !mk.byId ? '<div class="msg">Loading prices and recipes…</div>' :
+      '<div class="wrap"><table><thead><tr>' + th('name', 'Product') + th('bld', 'Building') + th('min', 'Time', 'r') + th('cost', 'Input cost', 'r') + th('rev', 'Output value', 'r') + th('profit', 'Profit / run', 'r') + th('ph', 'Profit / hour', 'r') + th('margin', 'Margin', 'r') + '</tr></thead><tbody>' +
+      rows.slice(0, 300).map((r) => '<tr><td>' + esc(r.name) + (r.amt > 1 ? ' <small>×' + r.amt + '</small>' : '') + '</td><td>' + esc(r.bld) + '</td><td class="r">' + (r.min >= 60 ? Math.floor(r.min / 60) + 'h' + (r.min % 60 ? ' ' + (r.min % 60) + 'm' : '') : r.min + 'm') + '</td><td class="r">' + money(r.cost) + '</td><td class="r">' + money(r.rev) + '</td><td class="r ' + (r.profit >= 0 ? 'up' : 'dn') + '">' + money(r.profit) + '</td><td class="r ' + (r.ph >= 0 ? 'up' : 'dn') + '"><b>' + money(r.ph) + '</b></td><td class="r">' + (r.margin == null ? '–' : pct(r.margin)) + '</td></tr>').join('') +
+      '</tbody></table></div>') +
+      '<div class="msg">Estimates from the base recipe only: no worker wages, building upkeep or research bonuses. Prices in $.</div></div>';
+    if (focus) { const nf = d.querySelector('input[data-p="q"]'); if (nf) { nf.focus(); nf.setSelectionRange(pos, pos); } }
+  }
+  function ensureProfitNav() {
+    const menu = document.querySelector('#app > nav.navbar .navbar-menu');
+    let a = document.getElementById('gtui-profit-nav');
+    if (!menu) return;
+    if (!a) {
+      a = document.createElement('a'); a.id = 'gtui-profit-nav'; a.className = 'nav-link'; a.setAttribute('data-gtui-label', 'Profit'); a.title = 'Production profit calculator'; a.setAttribute('role', 'button');
+      const u = document.querySelector('#app > nav.navbar svg use');
+      const base = u ? (u.getAttribute('xlink:href') || u.getAttribute('href') || '').split('#')[0] : '';
+      a.innerHTML = '<svg class="iu"><use xlink:href="' + base + '#chart-pie"></use></svg>';
+      a.addEventListener('click', openProfit);
+    }
+    if (a.parentElement !== menu) menu.appendChild(a);
+  }
+
   function syncAll() {
+    ensureProfitNav(); syncQuick(); syncWishPrices(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory();
     ensureBuyAll();
     ensureChickens();
     ensureKeys();
