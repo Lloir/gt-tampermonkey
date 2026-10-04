@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.41
+// @version      0.9.42
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -850,7 +850,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.41';
+    v.textContent = 'Sleek UI v0.9.42';
     bar.appendChild(v);
   }
 
@@ -1325,7 +1325,7 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], buyAll: true, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
   const hexRgb = (h) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [124, 92, 255]; };
   const CUSTOM_KEYS = [['bg', 'Page background'], ['panel', 'Panels'], ['p2', 'Raised panels / hover'], ['border', 'Borders'], ['fg', 'Text'], ['dim', 'Dim text'], ['accent', 'Accent']];
@@ -1408,6 +1408,8 @@
       '<label class="rw"><span>My messages go out in</span><select data-k="outlang">' + langOpts(cfg.outlang) + '</select></label>' +
       '<div class="note">Tip: end a message with a tag like <b>:fr</b> or <b>:de</b> and it is translated when you press Enter.</div>' +
       '<div class="note">Translation sends message text to Google Translate (Chrome 138+ translates on-device instead). Off by default.</div>' +
+      '<div class="sec">Exchange</div>' +
+      chk('buyAll', 'Show "Buy all" button on the wishlist') +
       '<div class="sec">Interface</div>' +
       '<label class="rw"><span>UI size</span><select data-k="size">' +
       [['', 'Auto (by screen)'], ['14', 'Small'], ['16', 'Normal'], ['18', 'Large'], ['20', 'Extra large'], ['22', 'Huge']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.size) === v ? ' selected' : '') + '>' + l + '</option>').join('') +
@@ -1856,7 +1858,7 @@
     const p = wishPanel();
     let b = document.getElementById('gtui-buyall');
     const grp = p && p.querySelector('.input-group');
-    if (!p || !wishActive() || !grp || !wishRows().length) { if (b) b.remove(); return; }
+    if (!cfg.buyAll || !p || !wishActive() || !grp || !wishRows().length) { if (b) b.remove(); return; }
     if (!b) {
       b = document.createElement('button');
       b.id = 'gtui-buyall'; b.type = 'button'; b.title = 'Buy every item on this wishlist';
