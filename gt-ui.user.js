@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.38
+// @version      0.9.39
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -829,7 +829,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.38';
+    v.textContent = 'Sleek UI v0.9.39';
     bar.appendChild(v);
   }
 
@@ -1291,7 +1291,7 @@
 
   /* ---------- Settings: themes, accent, hide images, UI size ---------- */
   const THEMES = {
-    nebula:   { name: 'Nebula',   bg: '#07081a', panel: '#0d0f26', p2: '#131637', border: '#25264d', fg: '#d4d9ff', dim: '#8c91b8', accent: '#7c5cff' },
+    nebula:   { name: 'LLM Purple',   bg: '#07081a', panel: '#0d0f26', p2: '#131637', border: '#25264d', fg: '#d4d9ff', dim: '#8c91b8', accent: '#7c5cff' },
     ocean:    { name: 'Ocean',    bg: '#050f1a', panel: '#09182a', p2: '#0f2540', border: '#1d3d63', fg: '#d6e8ff', dim: '#84a3c6', accent: '#38a9f8' },
     emerald:  { name: 'Emerald',  bg: '#05110d', panel: '#09201a', p2: '#0f2e25', border: '#1d4d3d', fg: '#d4f5e6', dim: '#84b9a2', accent: '#2fc995' },
     ember:    { name: 'Ember',    bg: '#130905', panel: '#1f110a', p2: '#2c1910', border: '#4d2e1c', fg: '#ffe6d4', dim: '#c4a28a', accent: '#f2873a' },
