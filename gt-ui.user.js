@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.54
+// @version      0.9.55
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -645,6 +645,7 @@
 
   /* ---- Comms options (settings): chat width cap, channels/contacts on the right, hide contacts ---- */
   html body .com-header b { font-weight: 700; letter-spacing: .01em; }
+  html body main.container-xxl:has(> .row.h-100) { padding-left: 8px !important; padding-right: 8px !important; }
   html body main > .row.h-100 { justify-content: center; }
   html body main > .row.h-100 > .col.min-w-0 { max-width: var(--gtui-chatmax, none); }
   html.gtui-chat-right body main > .row.h-100 > .col-3 { order: 2; }
@@ -871,10 +872,7 @@
   @keyframes gtui-spin { to { transform: rotate(360deg); } }
 
   /* ============ RESPONSIVE ============ */
-  /* very wide: cap line length of chat so it stays readable */
-  @media (min-width: 2200px) {
-    html body .com-msg, html body .com-header { max-width: 1400px; }
-  }
+  /* (the old 1400px line-length cap on chat is gone: use Settings -> Comms -> Max chat width if you want one) */
   /* tablet: force the collapsed rail */
   @media (max-width: 1100px) {
     html body #app > nav.navbar { width: var(--ui-rail-closed); }
@@ -2386,8 +2384,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.54';
+  const VERSION = '0.9.55';
   const CHANGELOG = {
+    '0.9.55': ['Chat now uses the full window width (removed the old 1400px cap on very wide screens)'],
     '0.9.54': ['SL Spacing: the header bar now hugs the name and time instead of stretching across a wide screen'],
     '0.9.53': ['Chat timestamps now sit next to the name instead of at the far edge on wide screens'],
     '0.9.51': ['New chat setting "SL Spacing": the game\'s original message bubbles and gaps, in your theme\'s colours'],
