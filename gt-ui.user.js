@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.47
+// @version      0.9.48
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -855,22 +855,6 @@
   html.gtui-embed body #app > main { margin: 0 !important; padding-top: 0 !important; height: 100vh !important; }
   html.gtui-embed body main > .row.h-100 { flex-direction: row; }
   html.gtui-embed body main > .row.h-100 > .col.min-w-0 { max-width: none; width: 100%; }
-
-  /* ---- chat archive ---- */
-  #gtui-arch-btn { flex: 0 0 auto; background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 2px 10px; font-size: .8rem; cursor: pointer; }
-  #gtui-arch-btn:hover { border-color: var(--ui-accent); color: var(--ui-hi); }
-  #gtui-arch { position: fixed; inset: 0; z-index: 2100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.62); }
-  #gtui-arch.open { display: flex; }
-  #gtui-arch .box { width: min(520px, 94vw); background: var(--ui-panel); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.7); padding: 18px 20px; }
-  #gtui-arch h3 { margin: 0 0 2px; font-size: 1.15rem; color: var(--ui-hi); }
-  #gtui-arch .sub { color: var(--ui-dim); font-size: .85rem; margin-bottom: 10px; }
-  #gtui-arch .msg { font-size: .84rem; color: var(--ui-dim); margin: 8px 0 12px; }
-  #gtui-arch .lim { display: block; font-size: .88rem; margin-bottom: 14px; }
-  #gtui-arch select { background: var(--ui-bg); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 6px; padding: 3px 8px; margin-left: 6px; }
-  #gtui-arch .act { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-  #gtui-arch .act button { background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 6px 16px; cursor: pointer; }
-  #gtui-arch .act button.go { background: var(--ui-accent); color: var(--ui-accent-fg); border-color: var(--ui-accent); font-weight: 700; }
-  html.gtui-arching main .com-group { content-visibility: auto; contain-intrinsic-size: auto 70px; }
 
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
@@ -2237,13 +2221,10 @@
       f.addEventListener('input', () => { chatFilter = f.value.trim().toLowerCase(); applyChatFilter(); });
     }
     if (f.parentElement !== hd) hd.insertBefore(f, hd.querySelector('.card-actions') || null);
-    let ab = document.getElementById('gtui-arch-btn');
-    if (!ab) { ab = document.createElement('button'); ab.id = 'gtui-arch-btn'; ab.type = 'button'; ab.title = 'Download the whole history of this channel'; ab.textContent = '⤓ History'; ab.addEventListener('click', openArchive); }
-    if (ab.parentElement !== hd) hd.insertBefore(ab, f.nextSibling);
     let mb = document.getElementById('gtui-multi-btn');
     if (EMBED || cfg.multiEnabled === false) { if (mb) mb.remove(); return; }
     if (!mb) { mb = document.createElement('button'); mb.id = 'gtui-multi-btn'; mb.type = 'button'; mb.title = 'Show several channels side by side'; mb.textContent = '⊞ Multi-chat'; mb.addEventListener('click', () => { cfg.multiOn = true; saveCfg(); schedule(); }); }
-    if (mb.parentElement !== hd) hd.insertBefore(mb, ab.nextSibling);
+    if (mb.parentElement !== hd) hd.insertBefore(mb, f.nextSibling);
   }
   function applyChatFilter() {
     document.querySelectorAll('main .com-group').forEach((g) => {
@@ -2261,7 +2242,6 @@
   function chatBody() { return document.querySelector('main .row.h-100 > .col.min-w-0 .card-body.overflow-y-auto'); }
   function syncHistory() {
     const body = chatBody(), n = parseInt(cfg.histN, 10) || 0;
-    if (arch.run) return;
     if (!body || !n) { document.querySelectorAll('.gtui-old').forEach((g) => g.classList.remove('gtui-old')); if (body) body.removeAttribute('data-gtui-hid'); return; }
     const chan = (document.querySelector('main .row.h-100 .list-group-item.active[data-channel-id]') || {}).dataset;
     const cid = chan ? chan.channelId : '';
@@ -2380,10 +2360,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.47';
+  const VERSION = '0.9.48';
   const CHANGELOG = {
     '0.9.47': ['Multi-chat now lives inside Comms: press "⊞ Multi-chat" in the chat header'],
-    '0.9.46': ['Chat history download: press "⤓ History" in a chat header to load the whole channel and save it as text or JSON'],
     '0.9.45': ['Multi-chat: several channels side by side'],
     '0.9.44': ['This "What\'s new" bar - dismiss it and it stays away until the next update'],
     '0.9.43': ['Price alerts: press 🔔 Alert on any Exchange item', 'Quick ¼ / ½ / Max buttons on the buy form', 'Wishlist: prices next to items and an estimate in Buy all', 'Chat: mention highlights, a filter box, and lighter history that loads more as you scroll up', 'Production profit calculator (Profit in the sidebar)', 'Number keys 1-9, row density, export/import all settings'],
@@ -2494,81 +2473,6 @@
     if (fr) fr.src = '/comms/' + it.dataset.channelId;
     if (sel) { if (![...sel.options].some((o) => o.value === it.dataset.channelId)) sel.add(new Option(it.textContent.trim() || '#' + it.dataset.channelId, it.dataset.channelId)); sel.value = it.dataset.channelId; }
   }, true);
-
-  /* ---------- Chat archive: load the whole history of a channel and save it as a file ---------- */
-  const arch = { run: false, stop: false };
-  function chatTitle() {
-    const b = document.querySelector('main .row.h-100 > .col.min-w-0 .card-header b, main .row.h-100 > .col.min-w-0 .card-header .text-truncate');
-    return b ? b.textContent.trim() : 'chat';
-  }
-  function harvestChat() {
-    const out = [];
-    document.querySelectorAll('main .row.h-100 > .col.min-w-0 .card-body .com-group').forEach((g) => {
-      const head = g.querySelector('.com-header'); if (!head) return;
-      const smalls = [...head.querySelectorAll('small')];
-      const tag = (smalls.find((x) => /^\[.*\]$/.test(x.textContent.trim())) || {}).textContent || '';
-      const time = (smalls.length ? smalls[smalls.length - 1].textContent : '').trim();
-      const name = ((head.querySelector('b') || {}).textContent || '').trim();
-      const msgs = [...g.querySelectorAll('.com-msg')].map((m) => { const c = m.cloneNode(true); c.querySelectorAll('.gtui-tr').forEach((n) => n.remove()); return c.textContent.trim().replace(/\s+/g, ' '); }).filter(Boolean);
-      if (msgs.length) out.push({ time, tag: tag.trim(), name, messages: msgs });
-    });
-    return out;
-  }
-  function saveFile(name, text, type) {
-    const url = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' }));
-    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-  }
-  function openArchive() {
-    let d = document.getElementById('gtui-arch');
-    if (!d) {
-      d = document.createElement('div'); d.id = 'gtui-arch'; document.body.appendChild(d);
-      d.addEventListener('click', (e) => {
-        const a = e.target.closest('[data-a]'); if (!a) { if (e.target === d && !arch.run) d.classList.remove('open'); return; }
-        const k = a.dataset.a;
-        if (k === 'close') { if (arch.run) arch.stop = true; d.classList.remove('open'); }
-        else if (k === 'go') runArchive(parseInt(d.querySelector('select').value, 10));
-        else if (k === 'stop') arch.stop = true;
-        else if (k === 'txt' || k === 'json') exportArchive(k);
-      });
-    }
-    d.classList.add('open');
-    d.innerHTML = '<div class="box"><h3>Download the chat history</h3><div class="sub">' + esc(chatTitle()) + '</div>' +
-      '<div class="msg">This scrolls back through the channel so the game loads older messages, then saves everything as a file. A long history takes a while (the game loads it in small pages) and uses a lot of memory, so pick a limit and keep this tab open.</div>' +
-      '<label class="lim">Load back up to <select><option value="2000">2,000 messages</option><option value="10000" selected>10,000 messages</option><option value="30000">30,000 messages</option><option value="100000">100,000 messages</option><option value="0">Everything</option></select></label>' +
-      '<div class="act"><button type="button" data-a="close">Cancel</button><button type="button" class="go" data-a="go">Start</button></div></div>';
-  }
-  async function runArchive(limit) {
-    const d = document.getElementById('gtui-arch'), body = chatBody();
-    if (!body || arch.run) return;
-    arch.run = true; arch.stop = false;
-    root.classList.add('gtui-arching');
-    const count = () => body.querySelectorAll('.com-msg').length;
-    const status = (t) => { const m = d.querySelector('.msg'); if (m) m.textContent = t; };
-    d.querySelector('.act').innerHTML = '<button type="button" data-a="stop">Stop and save what is loaded</button>';
-    let idle = 0, last = count(), why = '';
-    while (!arch.stop) {
-      if (limit && count() >= limit) { why = 'Reached the limit.'; break; }
-      body.scrollTop = 0; body.dispatchEvent(new Event('scroll'));
-      const ok = await waitFor(() => count() > last, 7000, 120);
-      if (ok) { idle = 0; last = count(); await sleep(60); status('Loading… ' + last.toLocaleString() + ' messages so far'); }
-      else if (++idle >= 2) { why = 'Reached the start of the channel.'; break; }
-    }
-    if (arch.stop && !why) why = 'Stopped.';
-    root.classList.remove('gtui-arching');
-    arch.data = harvestChat();
-    const total = arch.data.reduce((n, g) => n + g.messages.length, 0);
-    arch.title = chatTitle();
-    arch.run = false;
-    status(why + ' ' + total.toLocaleString() + ' messages loaded' + (arch.data[0] ? ', oldest from ' + arch.data[0].time : '') + '.');
-    d.querySelector('.act').innerHTML = '<button type="button" data-a="close">Close</button><button type="button" class="go" data-a="txt">Save as text</button><button type="button" class="go" data-a="json">Save as JSON</button>';
-  }
-  function exportArchive(kind) {
-    const data = arch.data || []; if (!data.length) return;
-    const stamp = new Date().toISOString().slice(0, 10), base = 'gt-chat-' + (arch.title || 'chat').replace(/[^\w\-]+/g, '_') + '-' + stamp;
-    if (kind === 'json') saveFile(base + '.json', JSON.stringify({ channel: arch.title, saved: new Date().toISOString(), groups: data }, null, 1), 'application/json');
-    else saveFile(base + '.txt', '# ' + arch.title + ' - saved ' + new Date().toLocaleString() + '\n' + data.map((g) => g.messages.map((m, i) => '[' + (i ? '  ' : g.time) + '] ' + (g.tag ? g.tag + ' ' : '') + g.name + ': ' + m).join('\n')).join('\n') + '\n');
-  }
 
   function syncAll() {
     if (EMBED) { syncBlocked(); syncTranslate(); syncOutbound(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory(); return; }
