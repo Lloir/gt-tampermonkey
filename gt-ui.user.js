@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.40
+// @version      0.9.41
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -850,7 +850,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.40';
+    v.textContent = 'Sleek UI v0.9.41';
     bar.appendChild(v);
   }
 
@@ -1832,7 +1832,7 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   async function waitFor(fn, ms, step) {
     const t0 = Date.now();
-    while (Date.now() - t0 < (ms || 4000)) { const v = fn(); if (v) return v; await sleep(step || 80); }
+    while (Date.now() - t0 < (ms || 4000)) { const v = fn(); if (v) return v; await sleep(step || 30); }
     return null;
   }
   const wishPanel = () => document.getElementById('exchangeMaterialsPanel');
@@ -1908,25 +1908,24 @@
       const row = wishRows().find((r) => r.name === it.name);
       if (!row) { mark(i, '–', 'skip'); continue; }   // gone already
       (row.el.querySelector('td') || row.el).click();
-      const ok = await waitFor(() => tradeName() === it.name, 4000);
+      const ok = await waitFor(() => tradeName() === it.name, 3000);
       if (!ok) { mark(i, '✕', 'bad'); why = 'Could not open ' + it.name + '.'; break; }
-      await sleep(250);
-      const q = document.getElementById('inputQuantity');
+      const q = await waitFor(() => document.getElementById('inputQuantity'), 1500);
       if (!q) { mark(i, '✕', 'bad'); why = 'Trade card not found.'; break; }
-      if (parseInt(q.value, 10) !== it.qty) { setNum(q, it.qty); await sleep(200); }
+      await waitFor(() => parseInt(q.value, 10) === it.qty, 500);   // the game fills the quantity in itself
+      if (parseInt(q.value, 10) !== it.qty) { setNum(q, it.qty); await sleep(80); }
       if (parseInt(q.value, 10) !== it.qty) { mark(i, '✕', 'bad'); why = 'Could not set the quantity for ' + it.name + '.'; break; }
       const btn = document.getElementById('exBuyButton');
       if (!btn || btn.disabled) { mark(i, '✕', 'bad'); why = 'Buy is not available for ' + it.name + '.'; break; }
       // 2) press the game's Buy button and watch for the result
       const before = toastCount(), toastsBefore = new Set(document.querySelectorAll('.toast-container .toast'));
       btn.click();
-      await waitFor(() => toastCount() > before || document.querySelector('.modal.show'), 4500);
-      await sleep(350);
+      await waitFor(() => toastCount() > before || document.querySelector('.modal.show'), 2200, 25);
+      await sleep(120);
       const fresh = [...document.querySelectorAll('.toast-container .toast')].filter((t) => !toastsBefore.has(t));
       const bad = fresh.find((t) => /danger|error/.test(t.className) || /not enough|insufficient|cannot|can't|failed|error|no offers|too late/i.test(t.textContent));
       if (bad || document.querySelector('.modal.show')) { mark(i, '✕', 'bad'); why = bad ? bad.textContent.trim().replace(/\s+/g, ' ').slice(0, 140) : 'A dialog opened - stopped.'; break; }
       mark(i, '✓', 'ok'); bought++;
-      await sleep(400);
     }
     if (buyRun.stop && !why) why = 'Stopped.';
     d.querySelector('.msg').textContent = (why ? why + ' ' : '') + bought + ' of ' + snap.length + ' bought.';
