@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.44
+// @version      0.9.45
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -831,6 +831,32 @@
   #gtui-new[data-collapsed="1"] li:nth-child(n+4) { display: none; }
   html body #app > main { padding-top: var(--gtui-newh, 0px) !important; }
 
+  /* ---- Multi-chat ---- */
+  #gtui-multi { position: fixed; top: 0; bottom: 0; left: var(--ui-rail-open); right: 0; z-index: 1040; display: none; flex-direction: column; background: var(--ui-bg); }
+  #gtui-multi.open { display: flex; }
+  html.gtui-collapsed #gtui-multi { left: var(--ui-rail-closed); }
+  html.gtui-right #gtui-multi { left: 0; right: var(--ui-rail-open); }
+  html.gtui-right.gtui-collapsed #gtui-multi { right: var(--ui-rail-closed); }
+  @media (max-width: 1100px) { #gtui-multi { left: var(--ui-rail-closed); } html.gtui-right #gtui-multi { left: 0; right: var(--ui-rail-closed); } }
+  @media (max-width: 640px) { #gtui-multi { left: 0; right: 0; bottom: 58px; } html.gtui-right #gtui-multi { right: 0; } }
+  #gtui-multi .bar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: var(--ui-panel); border-bottom: 1px solid var(--ui-border); color: var(--ui-fg); }
+  #gtui-multi .bar b { color: var(--ui-hi); }
+  #gtui-multi .bar .sp { flex: 1 1 auto; }
+  #gtui-multi .bar small { color: var(--ui-dim); }
+  #gtui-multi .bar button { background: none; border: 0; color: var(--ui-dim); font-size: 1.1rem; cursor: pointer; }
+  #gtui-multi select { background: var(--ui-bg); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 6px; padding: 2px 8px; }
+  #gtui-multi .grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 8px; padding: 8px; }
+  @media (max-width: 900px) { #gtui-multi .grid { grid-template-columns: 1fr; grid-auto-rows: minmax(0, 1fr); } }
+  #gtui-multi .pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border: 1px solid var(--ui-border); border-radius: 10px; overflow: hidden; background: var(--ui-panel); }
+  #gtui-multi .ph { padding: 4px 8px; background: var(--ui-panel-2); }
+  #gtui-multi iframe { flex: 1 1 0; min-height: 0; width: 100%; border: 0; background: var(--ui-bg); }
+  /* inside a multi-chat pane: only the chat */
+  html.gtui-embed body #app > nav.navbar, html.gtui-embed #gtui-new, html.gtui-embed #gtui-keys, html.gtui-embed #gtui-toasts,
+  html.gtui-embed body main > .row.h-100 > .col-3, html.gtui-embed #commsOffcanvasShowButton, html.gtui-embed .toast-container { display: none !important; }
+  html.gtui-embed body #app > main { margin: 0 !important; padding-top: 0 !important; height: 100vh !important; }
+  html.gtui-embed body main > .row.h-100 { flex-direction: row; }
+  html.gtui-embed body main > .row.h-100 > .col.min-w-0 { max-width: none; width: 100%; }
+
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
   @media (min-width: 2200px) {
@@ -886,6 +912,7 @@
   };
   function labelNav() {
     document.querySelectorAll('.navbar-menu > .nav-link').forEach((a) => {
+      if (/^gtui-/.test(a.id)) return;   // our own items carry their own label
       if (a.querySelector('.ms-1')) { a.removeAttribute('data-gtui-label'); return; }   // game shows its own
       const use = a.querySelector('svg use');
       const id = use && (use.getAttribute('xlink:href') || use.getAttribute('href') || '').split('#')[1];
@@ -1021,6 +1048,7 @@
       .filter(([, label]) => !q || label.toLowerCase().includes(q))
       .map(([id, label]) => ({ label, hint: 'screen', run: () => { const l = navLink(id); if (l) l.click(); } }));
     if (!q || 'settings theme options hide images'.includes(q)) palItems.push({ label: 'Settings – themes & hide images', hint: 'sleek ui', run: openSettings });
+    if (!q || 'multi chat several channels'.includes(q)) palItems.push({ label: 'Multi-chat (channels side by side)', hint: 'sleek ui', run: openMulti });
     if (!q || 'profit production calculator'.includes(q)) palItems.push({ label: 'Production profit calculator', hint: 'sleek ui', run: openProfit });
     LINKS.forEach((l) => { if (!q || l.label.toLowerCase().includes(q)) palItems.push({ label: l.label + ' ↗', hint: 'link', run: () => window.open(l.url, '_blank', 'noopener') }); });
     if (q) palItems.push({ label: 'Search market for “' + palIn.value.trim() + '”', hint: 'exchange', run: () => searchMarket(palIn.value.trim()) });
@@ -2092,7 +2120,7 @@
     if (dirty) saveCfg();
   }
   async function alertTick() {
-    if (!(cfg.alerts || []).length) return;
+    if (EMBED || !(cfg.alerts || []).length) return;
     await loadPrices();
     checkAlerts();
   }
@@ -2242,11 +2270,11 @@
 
   /* --- number keys: jump to a screen --- */
   document.addEventListener('keydown', (e) => {
-    if (!cfg.numKeys || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !/^[1-9]$/.test(e.key)) return;
+    if (EMBED || !cfg.numKeys || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !/^[1-9]$/.test(e.key)) return;
     const t = e.target;
     if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
     if (document.querySelector('.modal.show, #gtui-pal.open, #gtui-buy.open, #gtui-profit.open')) return;
-    const links = [...document.querySelectorAll('#app > nav.navbar .navbar-menu > .nav-link')].filter((a) => a.id !== 'gtui-notes-nav' && a.id !== 'gtui-profit-nav');
+    const links = [...document.querySelectorAll('#app > nav.navbar .navbar-menu > .nav-link')].filter((a) => !/^gtui-/.test(a.id));
     const l = links[+e.key - 1];
     if (l) { l.click(); e.preventDefault(); }
   });
@@ -2328,8 +2356,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.44';
+  const VERSION = '0.9.45';
   const CHANGELOG = {
+    '0.9.45': ['Multi-chat: several channels side by side (Multi-chat in the sidebar)'],
     '0.9.44': ['This "What\'s new" bar - dismiss it and it stays away until the next update'],
     '0.9.43': ['Price alerts: press 🔔 Alert on any Exchange item', 'Quick ¼ / ½ / Max buttons on the buy form', 'Wishlist: prices next to items and an estimate in Buy all', 'Chat: mention highlights, a filter box, and lighter history that loads more as you scroll up', 'Production profit calculator (Profit in the sidebar)', 'Number keys 1-9, row density, export/import all settings'],
     '0.9.42': ['Setting to hide the wishlist "Buy all" button'],
@@ -2368,7 +2397,71 @@
   function fitNewBar() { const d = document.getElementById('gtui-new'); if (d) root.style.setProperty('--gtui-newh', d.offsetHeight + 'px'); }
   window.addEventListener('resize', fitNewBar);
 
+  /* ---------- Multi-chat: several channels side by side (each pane is the game's own /comms/<id> page in a frame) ---------- */
+  const EMBED = window.name === 'gtui-embed';
+  if (EMBED) root.classList.add('gtui-embed');
+  const KNOWN0 = { 1000001: 'General', 1000002: 'Trade', 1000003: 'Help', 1000051: '中文' };
+  function learnChannels() {
+    const items = document.querySelectorAll('main .row.h-100 > .col-3 .list-group-item[data-channel-id]');
+    if (!items.length) return;
+    const m = sget('gtui:chans', {}); let ch = false;
+    items.forEach((b) => { const id = b.dataset.channelId, nm = b.textContent.trim().replace(/\s+/g, ' '); if (id && nm && m[id] !== nm) { m[id] = nm; ch = true; } });
+    if (ch) sset('gtui:chans', m);
+  }
+  const knownChans = () => Object.assign({}, KNOWN0, sget('gtui:chans', {}));
+  function multiState() {
+    const k = Object.keys(knownChans());
+    if (!cfg.multi || !Array.isArray(cfg.multi.ids)) {
+      const guild = k.find((id) => /^2\d{6}$/.test(id));
+      cfg.multi = { n: 2, ids: [guild || '1000001', guild ? '1000001' : '1000002', '1000002', '1000003'] };
+    }
+    return cfg.multi;
+  }
+  function openMulti() {
+    let d = document.getElementById('gtui-multi');
+    if (!d) {
+      d = document.createElement('div'); d.id = 'gtui-multi'; document.body.appendChild(d);
+      d.addEventListener('click', (e) => { if (e.target.closest('[data-a="x"]')) closeMulti(); });
+      d.addEventListener('change', (e) => {
+        const el = e.target, m = multiState();
+        if (el.dataset.m === 'n') { m.n = +el.value; saveCfg(); renderMulti(); }
+        else if (el.dataset.m === 'c') {
+          const i = +el.dataset.i; m.ids[i] = el.value; saveCfg();
+          const fr = d.querySelectorAll('iframe')[i]; if (fr) fr.src = '/comms/' + el.value;
+        }
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && d.classList.contains('open') && !e.target.closest('iframe')) closeMulti(); });
+    }
+    d.classList.add('open'); renderMulti();
+  }
+  function closeMulti() { const d = document.getElementById('gtui-multi'); if (d) { d.classList.remove('open'); d.innerHTML = ''; } }
+  function renderMulti() {
+    const d = document.getElementById('gtui-multi'); if (!d || !d.classList.contains('open')) return;
+    const m = multiState(), ch = knownChans();
+    const opts = (cur) => Object.entries(ch).map(([id, n]) => '<option value="' + id + '"' + (id === cur ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + (ch[cur] ? '' : '<option value="' + esc(cur) + '" selected>#' + esc(cur) + '</option>');
+    let panes = '';
+    for (let i = 0; i < m.n; i++) panes += '<div class="pane"><div class="ph"><select data-m="c" data-i="' + i + '">' + opts(m.ids[i]) + '</select></div><iframe name="gtui-embed" src="/comms/' + esc(m.ids[i]) + '" title="Chat ' + (i + 1) + '"></iframe></div>';
+    d.innerHTML = '<div class="bar"><b>Multi-chat</b><label>Panes <select data-m="n">' + [2, 3, 4].map((n) => '<option' + (m.n === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label>' +
+      '<span class="sp"></span><small>Each pane is a full copy of the game page, so it uses extra memory.</small><button type="button" data-a="x" title="Close">✕</button></div>' +
+      '<div class="grid" style="--n:' + m.n + '">' + panes + '</div>';
+  }
+  function ensureMultiNav() {
+    const menu = document.querySelector('#app > nav.navbar .navbar-menu');
+    let a = document.getElementById('gtui-multi-nav');
+    if (!menu) return;
+    if (!a) {
+      a = document.createElement('a'); a.id = 'gtui-multi-nav'; a.className = 'nav-link'; a.setAttribute('data-gtui-label', 'Multi-chat'); a.title = 'Several chat channels side by side'; a.setAttribute('role', 'button');
+      const u = document.querySelector('#app > nav.navbar svg use');
+      const base = u ? (u.getAttribute('xlink:href') || u.getAttribute('href') || '').split('#')[0] : '';
+      a.innerHTML = '<svg class="iu"><use xlink:href="' + base + '#message-lines"></use></svg>';
+      a.addEventListener('click', openMulti);
+    }
+    if (a.parentElement !== menu) menu.appendChild(a);
+  }
+
   function syncAll() {
+    if (EMBED) { syncBlocked(); syncTranslate(); syncOutbound(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory(); return; }
+    learnChannels(); ensureMultiNav();
     syncNewBar();
     ensureProfitNav(); syncQuick(); syncWishPrices(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory();
     ensureBuyAll();
