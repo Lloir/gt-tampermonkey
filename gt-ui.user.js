@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.34
+// @version      0.9.35
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -802,7 +802,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.34';
+    v.textContent = 'Sleek UI v0.9.35';
     bar.appendChild(v);
   }
 
@@ -1557,8 +1557,8 @@
   async function translateText(text, tl) {
     if (hasGlag(text)) text = glagToCyr(text);
     const base = tl.split('-')[0];
-    try {   // Chrome's on-device translator, when present
-      if ('Translator' in self && 'LanguageDetector' in self) {
+    try {   // Chrome's on-device translator, when present (only if the models are already downloaded - never wait on a download)
+      if ('Translator' in self && 'LanguageDetector' in self && (await LanguageDetector.availability()) === 'available') {
         tr.det = tr.det || await LanguageDetector.create();
         const r = (await tr.det.detect(text))[0];
         if (r && r.confidence > 0.6) {
@@ -1591,7 +1591,8 @@
     if (!r || !el.isConnected) return;
     let n = el.querySelector(':scope > .gtui-tr');
     if (!n) { n = document.createElement('div'); n.className = 'gtui-tr'; el.appendChild(n); }
-    n.dataset.l = r.src; n.textContent = r.text;
+    if (n.dataset.l !== r.src) n.dataset.l = r.src;
+    if (n.textContent !== r.text) n.textContent = r.text;   // only touch the DOM when it changed, or we re-trigger ourselves forever
   }
   async function trPump() {
     while (tr.busy < 3 && tr.queue.length) {
@@ -1608,12 +1609,8 @@
   function syncTranslate() {
     if (!cfg.translate) return;
     const tl = cfg.tlang || 'en';
-    const meEl = document.querySelector('#app > nav.navbar .dropdown-menu > li.dropdown-item[translate="no"]');
-    const myName = meEl ? meEl.textContent.trim() : '';
     const msgs = [...document.querySelectorAll('main .com-msg')].slice(-80);
     for (const el of msgs) {
-      const who = el.closest('.com-group'); const hb = who && who.querySelector('.com-header b');
-      if (myName && hb && hb.textContent.trim() === myName) continue;   /* never translate our own lines */
       const clone = el.cloneNode(true); const old = clone.querySelector('.gtui-tr'); if (old) old.remove();
       const text = clone.textContent.trim();
       const wd0 = fromWing(text); if (wd0) { trShow(el, { text: wd0, src: 'Wingdings' }); continue; }
@@ -1784,7 +1781,7 @@
     if (css && css.nextElementSibling) (document.head || root).appendChild(css);
   });
   const start = () => {
-    mo.observe(document.body || root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    mo.observe(document.body || root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
     schedule();
   };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
