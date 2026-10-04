@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.50
+// @version      0.9.51
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -626,11 +626,14 @@
   /* ============ SCREEN: Comms ============ */
   /* channel column scales with screen instead of fixed col-3 */
   html body main .row > .col-3 { flex: 0 0 clamp(220px, 16vw, 340px); width: clamp(220px, 16vw, 340px); }
-  html body .com-group { margin-bottom: 6px; }
-  html body .com-group .avatar { width: 28px; height: 28px; }
-  html body .com-header { background: transparent !important; padding: 0 !important; font-size: .82rem; }
-  html body .com-msg { background: transparent !important; padding: 1px 0 !important; line-height: 1.35; }
-  html body .com-msg:hover { background: var(--ui-panel-2) !important; border-radius: 4px; }
+  html:not(.gtui-slspace) body .com-group { margin-bottom: 6px; }
+  html:not(.gtui-slspace) body .com-group .avatar { width: 28px; height: 28px; }
+  html:not(.gtui-slspace) body .com-header { background: transparent !important; padding: 0 !important; font-size: .82rem; }
+  html:not(.gtui-slspace) body .com-msg { background: transparent !important; padding: 1px 0 !important; line-height: 1.35; }
+  html:not(.gtui-slspace) body .com-msg:hover { background: var(--ui-panel-2) !important; border-radius: 4px; }
+  /* SL Spacing: keep the game's own bubble layout (header bar, one bubble per message, gaps), just in the theme's colours */
+  html.gtui-slspace body .com-header.bg-body, html.gtui-slspace body .com-msg.bg-body { background-color: var(--ui-panel-2) !important; }
+  html.gtui-slspace body .com-header.bg-primary, html.gtui-slspace body .com-msg.bg-primary { background-color: color-mix(in srgb, var(--ui-accent) 55%, var(--ui-panel)) !important; color: var(--ui-hi); }
   html body .card-footer textarea.form-control { background: var(--ui-bg) !important; min-height: 44px !important; }
 
   @media (min-width: 768px) {
@@ -791,13 +794,13 @@
   html.gtui-dense body .table > :not(caption) > * > * { padding: .16rem .45rem; }
   html.gtui-dense body #gtui-mlist .r { height: 1.55rem; }
   html.gtui-dense body .list-group-item { padding-top: .3rem; padding-bottom: .3rem; }
-  html.gtui-dense body .com-group { margin-bottom: 2px; }
-  html.gtui-dense body .com-msg { line-height: 1.2; }
+  html.gtui-dense:not(.gtui-slspace) body .com-group { margin-bottom: 2px; }
+  html.gtui-dense:not(.gtui-slspace) body .com-msg { line-height: 1.2; }
   html.gtui-roomy body .table > :not(caption) > * > * { padding: .6rem .8rem; }
   html.gtui-roomy body #gtui-mlist .r { height: 2.5rem; }
   html.gtui-roomy body .list-group-item { padding-top: .75rem; padding-bottom: .75rem; }
-  html.gtui-roomy body .com-group { margin-bottom: 12px; }
-  html.gtui-roomy body .com-msg { line-height: 1.6; }
+  html.gtui-roomy:not(.gtui-slspace) body .com-group { margin-bottom: 12px; }
+  html.gtui-roomy:not(.gtui-slspace) body .com-msg { line-height: 1.6; }
   #gtui-profit { position: fixed; inset: 0; z-index: 2100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.62); }
   #gtui-profit.open { display: flex; }
   #gtui-profit .box { width: min(980px, 96vw); max-height: 90vh; display: flex; flex-direction: column; background: var(--ui-panel); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.7); padding: 16px 18px; }
@@ -1425,7 +1428,7 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
   const hexRgb = (h) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [124, 92, 255]; };
   const CUSTOM_KEYS = [['bg', 'Page background'], ['panel', 'Panels'], ['p2', 'Raised panels / hover'], ['border', 'Borders'], ['fg', 'Text'], ['dim', 'Dim text'], ['accent', 'Accent']];
@@ -1457,6 +1460,7 @@
     root.classList.toggle('gtui-hide-stats', !cfg.showStats);
     root.classList.toggle('gtui-hide-pills', !cfg.showPills);
     root.classList.toggle('gtui-hide-keys', !cfg.showKeys);
+    root.classList.toggle('gtui-slspace', !!cfg.slSpacing);
     root.classList.toggle('gtui-dense', cfg.density === 'compact');
     root.classList.toggle('gtui-roomy', cfg.density === 'roomy');
     root.classList.toggle('gtui-chat-right', cfg.chatSide === 'right');
@@ -1501,6 +1505,7 @@
       [['full', 'Full'], ['auto', 'Auto-hide (slides out on hover)']].map(([v, l]) => '<option value="' + v + '"' + ((cfg.chanMode === v || (v === 'auto' && cfg.chanMode === 'compact')) ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       '<label class="rw"><span>Max chat width</span><select data-k="chatMax">' +
       [['', 'No limit'], ['800', 'Narrow (800px)'], ['1000', 'Medium (1000px)'], ['1300', 'Wide (1300px)'], ['1700', 'Extra wide (1700px)']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.chatMax) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      chk('slSpacing', 'SL Spacing (message bubbles with gaps, like the original chat)') +
       chk('hideContacts', 'Hide the contacts list') +
       chk('multiEnabled', 'Enable multi-chat (several channels side by side)') +
       '<div class="sec">Blocked players</div>' +
@@ -2391,8 +2396,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.50';
+  const VERSION = '0.9.51';
   const CHANGELOG = {
+    '0.9.51': ['New chat setting "SL Spacing": the game\'s original message bubbles and gaps, in your theme\'s colours'],
     '0.9.50': ['Translation: pressing Enter twice no longer sends the untranslated message first, a "Translating…" indicator while it works, "translating…" placeholders on incoming lines, and failed translations are retried'],
     '0.9.49': ['Settings now has a "Check for updates" button (and a once-a-day heads-up when a new version exists)'],
     '0.9.47': ['Multi-chat now lives inside Comms: press "⊞ Multi-chat" in the chat header'],
