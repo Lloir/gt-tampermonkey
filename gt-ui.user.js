@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.52
+// @version      0.9.53
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -630,6 +630,9 @@
   html:not(.gtui-slspace) body .com-group .avatar { width: 28px; height: 28px; }
   html:not(.gtui-slspace) body .com-header { background: transparent !important; padding: 0 !important; font-size: .82rem; }
   html:not(.gtui-slspace) body .com-msg { background: transparent !important; padding: 1px 0 !important; line-height: 1.35; }
+  /* timestamps sit right after the name instead of at the far edge of a very wide chat */
+  html:not(.gtui-slspace) body .com-header { width: fit-content; max-width: 100%; column-gap: .4rem; }
+  html:not(.gtui-slspace) body .com-header > small:last-child { margin-left: .6rem !important; opacity: .55; }
   html:not(.gtui-slspace) body .com-msg:hover { background: var(--ui-panel-2) !important; border-radius: 4px; }
   /* SL Spacing: keep the game's own bubble layout (header bar, one bubble per message, gaps), just in the theme's colours */
   html.gtui-slspace body .com-header.bg-body, html.gtui-slspace body .com-msg.bg-body { background-color: var(--ui-panel-2) !important; }
@@ -2383,8 +2386,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.52';
+  const VERSION = '0.9.53';
   const CHANGELOG = {
+    '0.9.53': ['Chat timestamps now sit next to the name instead of at the far edge on wide screens'],
     '0.9.51': ['New chat setting "SL Spacing": the game\'s original message bubbles and gaps, in your theme\'s colours'],
     '0.9.50': ['Translation: pressing Enter twice no longer sends the untranslated message first, a "Translating…" indicator while it works, "translating…" placeholders on incoming lines, and failed translations are retried'],
     '0.9.49': ['Settings now has a "Check for updates" button (and a once-a-day heads-up when a new version exists)'],
