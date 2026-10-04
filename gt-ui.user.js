@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.37
+// @version      0.9.38
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -739,6 +739,17 @@
   html.gtui-material body #gtui-cats button.on, html.gtui-material body #gtui-mlist .r.sel { background: color-mix(in srgb, var(--ui-accent) 24%, transparent); border-left-color: transparent; border-radius: 12px; }
   html.gtui-material body .com-msg:hover { border-radius: 8px; }
 
+  html.gtui-light body .card-footer { background: var(--ui-panel-2) !important; border-color: var(--ui-border) !important; }
+
+  /* ---- Chicken Chaos themes ---- */
+  html.gtui-chick body { background-image: radial-gradient(color-mix(in srgb, var(--ui-accent) 30%, transparent) .7px, transparent .7px) !important; background-size: 24px 24px !important; }
+  html.gtui-chick body #app > main { background: transparent !important; }
+  #gtui-chix { display: none; position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+  html.gtui-chick #gtui-chix { display: block; }
+  #gtui-chix span { position: absolute; top: -40px; opacity: .22; animation: gtui-chix-fall linear infinite; }
+  @keyframes gtui-chix-fall { from { transform: translateY(-5vh) rotate(-12deg); } 50% { transform: translateY(55vh) rotate(14deg); } to { transform: translateY(110vh) rotate(-8deg); } }
+  @media (prefers-reduced-motion: reduce) { #gtui-chix { display: none !important; } }
+
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
   @media (min-width: 2200px) {
@@ -818,7 +829,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.37';
+    v.textContent = 'Sleek UI v0.9.38';
     bar.appendChild(v);
   }
 
@@ -1289,6 +1300,8 @@
     terminal: { name: 'Terminal', bg: '#020502', panel: '#061006', p2: '#0c1c0c', border: '#1d3f1d', fg: '#c9f7c9', dim: '#7fae7f', accent: '#3ddc3d' },
     matdark:  { name: 'Material Dark', mat: true, bg: '#141218', panel: '#211f26', p2: '#2b2930', border: '#49454f', fg: '#e6e0e9', dim: '#cac4d0', accent: '#d0bcff' },
     matlight: { name: 'Material Light', mat: true, bg: '#fef7ff', panel: '#f3edf7', p2: '#ece6f0', border: '#cac4d0', fg: '#1d1b20', dim: '#49454f', accent: '#6750a4' },
+    chickdark: { name: 'Chicken Chaos (Dark)', mat: true, chick: true, bg: '#0d0904', panel: '#1a1208', p2: '#241a0c', border: '#3d3118', fg: '#fbeed0', dim: '#d6c5a0', accent: '#ffd54a' },
+    chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
   const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
@@ -1315,6 +1328,7 @@
     root.classList.toggle('gtui-hide-avatars', !!cfg.hideAvatars);
     root.classList.toggle('gtui-hide-logos', !!cfg.hideLogos);
     root.classList.toggle('gtui-hide-portraits', !!cfg.hidePortraits);
+    root.classList.toggle('gtui-chick', !!t.chick);
     root.classList.toggle('gtui-material', cfg.style === 'material' || !!t.mat);
     root.classList.toggle('gtui-right', cfg.side === 'right');
     root.classList.toggle('gtui-qstack', cfg.quick === 'stack');
@@ -1775,7 +1789,24 @@
     });
   }
 
+  /* Chicken Chaos themes (from the TiT Race site): a few chickens drift down the screen */
+  function ensureChickens() {
+    if (document.getElementById('gtui-chix') || !document.body) return;
+    const d = document.createElement('div');
+    d.id = 'gtui-chix';
+    d.setAttribute('aria-hidden', 'true');
+    const faces = ['🐔', '🐓', '🐤', '🥚', '🐣'];
+    for (let i = 0; i < 14; i++) {
+      const sp = document.createElement('span');
+      sp.textContent = faces[i % faces.length];
+      sp.style.cssText = 'left:' + ((i * 7.3 + 3) % 97) + '%;animation-duration:' + (14 + (i * 5) % 11) + 's;animation-delay:-' + ((i * 3.7) % 20) + 's;font-size:' + (16 + (i * 7) % 14) + 'px';
+      d.appendChild(sp);
+    }
+    document.body.appendChild(d);
+  }
+
   function syncAll() {
+    ensureChickens();
     ensureKeys();
     syncCompactBits();
     syncBlocked();
