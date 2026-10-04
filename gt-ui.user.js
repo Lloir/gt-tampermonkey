@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.56
+// @version      0.9.57
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -127,6 +127,17 @@
   html.gtui-qstack body #app > nav.navbar > .container-xxl > .dropdown { grid-column: 1; grid-row: 8; }
   html.gtui-collapsed body #app > nav.navbar > .container-xxl > #gtui-notes,
   html.gtui-qstack body #app > nav.navbar > .container-xxl > #gtui-notes { grid-column: 1; grid-row: 9; }
+  /* stacked: every box the same width and height, nothing poking out of the sidebar */
+  html.gtui-qstack body #app > nav.navbar { overflow-x: hidden; }
+  html.gtui-qstack body #app > nav.navbar > .container-xxl > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  html.gtui-qstack body #app > nav.navbar > .container-xxl > .btn-group,
+  html.gtui-qstack body #app > nav.navbar > .container-xxl > #gtui-stats2 { width: 100%; }
+  html.gtui-qstack #gtui-stats2 div, html.gtui-qstack body #app > nav.navbar .btn-group > .btn { min-height: 38px; box-sizing: border-box; display: flex; align-items: center; }
+  html.gtui-qstack #gtui-stats2 div { justify-content: space-between; }
+  html.gtui-qstack #gtui-stats2 { gap: 6px; }
+  html.gtui-qstack body #app > nav.navbar .btn-group { gap: 6px; flex-direction: column; }
+  html.gtui-qstack body #app > nav.navbar .btn-group > .btn { width: 100%; border-radius: var(--ui-radius) !important; justify-content: flex-start; }
+  html.gtui-qstack #gtui-setbtn, html.gtui-qstack #gtui-toggle { min-height: 38px; width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
   /* optional sections */
   html.gtui-hide-links #gtui-links, html.gtui-hide-stats #gtui-stats2 { display: none !important; }
   html.gtui-hide-pills body #app > nav.navbar .btn-group { display: none !important; }
@@ -2390,8 +2401,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.56';
+  const VERSION = '0.9.57';
   const CHANGELOG = {
+    '0.9.57': ['Stacked sidebar: every box (stats, bell, profile, Settings, Collapse) is now the same size and stays inside the sidebar'],
     '0.9.56': ['New themes: Nanoweave Shielding (Dark and Light), blue/green with the Material look, dotted background and drifting shields and droplets'],
     '0.9.55': ['Chat now uses the full window width (removed the old 1400px cap on very wide screens)'],
     '0.9.54': ['SL Spacing: the header bar now hugs the name and time instead of stretching across a wide screen'],
