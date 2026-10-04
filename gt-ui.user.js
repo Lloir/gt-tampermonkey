@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.39
+// @version      0.9.40
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -750,6 +750,27 @@
   @keyframes gtui-chix-fall { from { transform: translateY(-5vh) rotate(-12deg); } 50% { transform: translateY(55vh) rotate(14deg); } to { transform: translateY(110vh) rotate(-8deg); } }
   @media (prefers-reduced-motion: reduce) { #gtui-chix { display: none !important; } }
 
+  /* wishlist: Buy all */
+  #gtui-buyall { flex: 0 0 auto; background: var(--ui-accent); color: var(--ui-accent-fg); border: 0; padding: 0 14px; font-weight: 700; cursor: pointer; border-radius: 0 6px 6px 0; }
+  #gtui-buyall:hover { filter: brightness(1.12); }
+  #gtui-buy { position: fixed; inset: 0; z-index: 2100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.62); }
+  #gtui-buy.open { display: flex; }
+  #gtui-buy .box { width: min(520px, 94vw); max-height: 86vh; display: flex; flex-direction: column; background: var(--ui-panel); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.7); padding: 18px 20px; }
+  #gtui-buy h3 { margin: 0 0 4px; font-size: 1.15rem; color: var(--ui-hi); }
+  #gtui-buy .sub { color: var(--ui-dim); font-size: .82rem; margin-bottom: 10px; }
+  #gtui-buy .lst { overflow-y: auto; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-bg); }
+  #gtui-buy .it { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--ui-border); }
+  #gtui-buy .it:last-child { border-bottom: 0; }
+  #gtui-buy .it .st { width: 1.2em; text-align: center; color: var(--ui-dim); }
+  #gtui-buy .it .n { flex: 1 1 auto; }
+  #gtui-buy .it b { font-variant-numeric: tabular-nums; }
+  #gtui-buy .it.cur { background: rgba(var(--ui-accent-rgb), .18); }
+  #gtui-buy .it.ok .st { color: #4ade80; } #gtui-buy .it.bad .st { color: #f87171; } #gtui-buy .it.skip { opacity: .5; }
+  #gtui-buy .msg { margin: 12px 0; font-size: .82rem; color: var(--ui-dim); }
+  #gtui-buy .act { display: flex; justify-content: flex-end; gap: 8px; }
+  #gtui-buy .act button { background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 6px 16px; cursor: pointer; }
+  #gtui-buy .act button.go { background: var(--ui-accent); color: var(--ui-accent-fg); border-color: var(--ui-accent); font-weight: 700; }
+
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
   @media (min-width: 2200px) {
@@ -829,7 +850,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.39';
+    v.textContent = 'Sleek UI v0.9.40';
     bar.appendChild(v);
   }
 
@@ -1805,7 +1826,116 @@
     document.body.appendChild(d);
   }
 
+  /* ---------- Exchange: "Buy all" for the wishlist ----------
+     Drives the game's own UI one item at a time (click the wishlist row -> the game fills the quantity -> click its Buy button),
+     after an explicit confirmation. Stops on any error, an unexpected dialog, or when you press Stop. */
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function waitFor(fn, ms, step) {
+    const t0 = Date.now();
+    while (Date.now() - t0 < (ms || 4000)) { const v = fn(); if (v) return v; await sleep(step || 80); }
+    return null;
+  }
+  const wishPanel = () => document.getElementById('exchangeMaterialsPanel');
+  const wishActive = () => { const p = wishPanel(); return !!(p && p.querySelector('[data-popup-id="editWishlistExchange"]')); };
+  function wishRows() {
+    const p = wishPanel(); if (!p) return [];
+    return [...p.querySelectorAll('tbody tr[role="button"]')].map((el) => {
+      const inp = el.querySelector('input[type="number"]');
+      return { el, name: (el.querySelector('td') || {}).textContent.trim().replace(/\s+/g, ' '), qty: inp ? parseInt(inp.value, 10) || 0 : 0 };
+    }).filter((r) => r.name && r.qty > 0);
+  }
+  const tradeName = () => { const h = document.querySelector('#exchangeTradeMatCard .card-header .h5'); return h ? h.textContent.trim() : ''; };
+  function setNum(inp, v) {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(inp, String(v));
+    inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  const toastCount = () => document.querySelectorAll('.toast-container .toast').length;
+  let buyRun = null;
+
+  function ensureBuyAll() {
+    const p = wishPanel();
+    let b = document.getElementById('gtui-buyall');
+    const grp = p && p.querySelector('.input-group');
+    if (!p || !wishActive() || !grp || !wishRows().length) { if (b) b.remove(); return; }
+    if (!b) {
+      b = document.createElement('button');
+      b.id = 'gtui-buyall'; b.type = 'button'; b.title = 'Buy every item on this wishlist';
+      b.textContent = 'Buy all';
+      b.addEventListener('click', openBuyAll);
+    }
+    if (b.parentElement !== grp) grp.appendChild(b);
+  }
+
+  function buyDialog() {
+    let d = document.getElementById('gtui-buy');
+    if (!d) {
+      d = document.createElement('div'); d.id = 'gtui-buy';
+      document.body.appendChild(d);
+      d.addEventListener('click', (e) => {
+        const a = e.target.closest('[data-a]'); if (!a) { if (e.target === d && !buyRun) d.classList.remove('open'); return; }
+        if (a.dataset.a === 'cancel') d.classList.remove('open');
+        else if (a.dataset.a === 'go') runBuyAll();
+        else if (a.dataset.a === 'stop') { if (buyRun) buyRun.stop = true; }
+      });
+    }
+    return d;
+  }
+  function openBuyAll() {
+    const rows = wishRows(); if (!rows.length) return;
+    const d = buyDialog();
+    const cost = [...wishPanel().querySelectorAll('.input-group-text span')].map((x) => x.textContent.trim().replace(/\s+/g, ' ')).join('  ·  ');
+    d.innerHTML = '<div class="box"><h3>Buy everything on this wishlist?</h3>' +
+      '<div class="sub">' + esc(cost) + '</div>' +
+      '<div class="lst">' + rows.map((r, i) => '<div class="it" data-i="' + i + '"><span class="st">·</span><span class="n">' + esc(r.name) + '</span><b>' + r.qty.toLocaleString() + '</b></div>').join('') + '</div>' +
+      '<div class="msg">Items are bought one after another using the game\'s own Buy button, at the current best offers. You can stop at any time; anything already bought stays bought.</div>' +
+      '<div class="act"><button type="button" data-a="cancel">Cancel</button><button type="button" class="go" data-a="go">Buy ' + rows.length + ' item' + (rows.length > 1 ? 's' : '') + '</button></div></div>';
+    d.dataset.snap = JSON.stringify(rows.map((r) => ({ name: r.name, qty: r.qty })));
+    d.classList.add('open');
+  }
+  async function runBuyAll() {
+    const d = buyDialog(); if (buyRun) return;
+    const snap = JSON.parse(d.dataset.snap || '[]');
+    buyRun = { stop: false };
+    d.querySelector('.act').innerHTML = '<button type="button" data-a="stop">Stop</button>';
+    d.querySelector('.msg').textContent = 'Buying… keep this tab open.';
+    const mark = (i, ch, cls) => { const it = d.querySelector('.it[data-i="' + i + '"]'); if (it) { it.querySelector('.st').textContent = ch; it.className = 'it ' + (cls || ''); } };
+    let bought = 0, why = '';
+    for (let i = 0; i < snap.length && !buyRun.stop; i++) {
+      const it = snap[i];
+      mark(i, '…', 'cur');
+      if (document.querySelector('.modal.show')) { why = 'A dialog opened - stopped.'; break; }
+      // 1) open the item from the wishlist (the game fills in the quantity itself)
+      const row = wishRows().find((r) => r.name === it.name);
+      if (!row) { mark(i, '–', 'skip'); continue; }   // gone already
+      (row.el.querySelector('td') || row.el).click();
+      const ok = await waitFor(() => tradeName() === it.name, 4000);
+      if (!ok) { mark(i, '✕', 'bad'); why = 'Could not open ' + it.name + '.'; break; }
+      await sleep(250);
+      const q = document.getElementById('inputQuantity');
+      if (!q) { mark(i, '✕', 'bad'); why = 'Trade card not found.'; break; }
+      if (parseInt(q.value, 10) !== it.qty) { setNum(q, it.qty); await sleep(200); }
+      if (parseInt(q.value, 10) !== it.qty) { mark(i, '✕', 'bad'); why = 'Could not set the quantity for ' + it.name + '.'; break; }
+      const btn = document.getElementById('exBuyButton');
+      if (!btn || btn.disabled) { mark(i, '✕', 'bad'); why = 'Buy is not available for ' + it.name + '.'; break; }
+      // 2) press the game's Buy button and watch for the result
+      const before = toastCount(), toastsBefore = new Set(document.querySelectorAll('.toast-container .toast'));
+      btn.click();
+      await waitFor(() => toastCount() > before || document.querySelector('.modal.show'), 4500);
+      await sleep(350);
+      const fresh = [...document.querySelectorAll('.toast-container .toast')].filter((t) => !toastsBefore.has(t));
+      const bad = fresh.find((t) => /danger|error/.test(t.className) || /not enough|insufficient|cannot|can't|failed|error|no offers|too late/i.test(t.textContent));
+      if (bad || document.querySelector('.modal.show')) { mark(i, '✕', 'bad'); why = bad ? bad.textContent.trim().replace(/\s+/g, ' ').slice(0, 140) : 'A dialog opened - stopped.'; break; }
+      mark(i, '✓', 'ok'); bought++;
+      await sleep(400);
+    }
+    if (buyRun.stop && !why) why = 'Stopped.';
+    d.querySelector('.msg').textContent = (why ? why + ' ' : '') + bought + ' of ' + snap.length + ' bought.';
+    d.querySelector('.act').innerHTML = '<button type="button" class="go" data-a="cancel">Close</button>';
+    buyRun = null;
+  }
+
   function syncAll() {
+    ensureBuyAll();
     ensureChickens();
     ensureKeys();
     syncCompactBits();
