@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.48
+// @version      0.9.49
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -554,6 +554,8 @@
   #gtui-set .bchip { display: inline-flex; align-items: center; gap: 6px; background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 14px; padding: 1px 4px 1px 10px; font-size: .82rem; }
   #gtui-set .bchip button { background: none; border: 0; color: var(--ui-dim); cursor: pointer; padding: 0 5px; }
   #gtui-set .bchip button:hover { color: var(--ui-fg); }
+  #gtui-set .upd { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--ui-border); font-size: .8rem; color: var(--ui-dim); }
+  #gtui-set .upd b { color: var(--ui-hi); }
   #gtui-set .note { color: var(--ui-dim); font-size: .74rem; margin-top: 8px; }
 
   /* ============ sidebar: external links ============ */
@@ -1523,6 +1525,7 @@
       '<label class="rw"><span>UI size</span><select data-k="size">' +
       [['', 'Auto (by screen)'], ['14', 'Small'], ['16', 'Normal'], ['18', 'Large'], ['20', 'Extra large'], ['22', 'Huge']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.size) === v ? ' selected' : '') + '>' + l + '</option>').join('') +
       '</select></label>' +
+      (UPDATE_URL ? '<div class="upd">Sleek UI v' + esc(VERSION) + ' &middot; <button type="button" class="sm" data-a="upd-check">Check for updates</button> <span class="ust"></span></div>' : '<div class="upd">Sleek UI v' + esc(VERSION) + '</div>') +
       '<div class="note">Settings are saved in this browser. <button type="button" class="sm" data-a="set-export">Export</button> <button type="button" class="sm" data-a="set-import">Import</button> <button type="button" class="sm" data-a="reset-all">Reset all</button><input type="file" accept=".json,application/json" data-f="settings" hidden></div>';
   }
   function addBlock(raw) {
@@ -1577,6 +1580,8 @@
         const dl = document.createElement('a'); dl.href = url; dl.download = 'gt-sleek-ui-settings.json'; document.body.appendChild(dl); dl.click(); dl.remove();
         setTimeout(() => URL.revokeObjectURL(url), 2000);
       } else if (a.dataset.a === 'set-import') { const f = setPanel.querySelector('[data-f="settings"]'); if (f) f.click(); }
+      else if (a.dataset.a === 'upd-check') checkUpdate(setPanel.querySelector('.ust'));
+      else if (a.dataset.a === 'upd-open') window.open(UPDATE_URL, '_blank', 'noopener');
       else if (a.dataset.a === 'accent-reset') { cfg.accent = ''; saveCfg(); renderSettings(); }
       else if (a.dataset.a === 'reset-all') { cfg = Object.assign({}, CFG_DEFAULT); saveCfg(); renderSettings(); }
     });
@@ -2360,8 +2365,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.48';
+  const VERSION = '0.9.49';
   const CHANGELOG = {
+    '0.9.49': ['Settings now has a "Check for updates" button (and a once-a-day heads-up when a new version exists)'],
     '0.9.47': ['Multi-chat now lives inside Comms: press "⊞ Multi-chat" in the chat header'],
     '0.9.45': ['Multi-chat: several channels side by side'],
     '0.9.44': ['This "What\'s new" bar - dismiss it and it stays away until the next update'],
@@ -2473,6 +2479,37 @@
     if (fr) fr.src = '/comms/' + it.dataset.channelId;
     if (sel) { if (![...sel.options].some((o) => o.value === it.dataset.channelId)) sel.add(new Option(it.textContent.trim() || '#' + it.dataset.channelId, it.dataset.channelId)); sel.value = it.dataset.channelId; }
   }, true);
+
+  /* ---------- Update check (settings panel) ---------- */
+  const UPDATE_URL = 'https://raw.githubusercontent.com/Lloir/gt-tampermonkey/main/gt-ui.user.js';
+  async function fetchLatest() {
+    const r = await fetch(UPDATE_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const m = /@version\s+(\S+)/.exec(await r.text());
+    if (!m) throw new Error('no version');
+    return m[1];
+  }
+  async function checkUpdate(statusEl) {
+    const set = (h) => { if (statusEl && statusEl.isConnected) statusEl.innerHTML = h; };
+    set('Checking…');
+    try {
+      const v = await fetchLatest();
+      sset('gtui:upd', { at: Date.now(), v });
+      if (vnum(v) > vnum(VERSION)) set('Update available: <b>v' + esc(v) + '</b> <button type="button" class="sm" data-a="upd-open">Install</button>');
+      else set('You are up to date.');
+      return v;
+    } catch (e) {
+      set('Could not check from here. <button type="button" class="sm" data-a="upd-open">Open the install page</button>');
+      return null;
+    }
+  }
+  // once a day, quietly: tell the user if a newer version exists
+  setTimeout(async () => {
+    if (EMBED) return;
+    const last = sget('gtui:upd', null);
+    if (last && Date.now() - last.at < 86400000) { if (vnum(last.v) > vnum(VERSION) && !sget('gtui:updtold:' + last.v, false)) { sset('gtui:updtold:' + last.v, true); toast('Sleek UI v' + last.v + ' is available - open Settings and press "Check for updates".', 12000); } return; }
+    try { const v = await fetchLatest(); sset('gtui:upd', { at: Date.now(), v }); if (vnum(v) > vnum(VERSION)) { sset('gtui:updtold:' + v, true); toast('Sleek UI v' + v + ' is available - open Settings and press "Check for updates".', 12000); } } catch (e) { /* offline or blocked: stay quiet */ }
+  }, 9000);
 
   function syncAll() {
     if (EMBED) { syncBlocked(); syncTranslate(); syncOutbound(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory(); return; }
