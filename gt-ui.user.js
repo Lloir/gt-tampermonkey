@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.33
+// @version      0.9.34
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -678,6 +678,21 @@
     html.gtui-chan-compact body main > .row.h-100 > .col-3:hover svg.iu, html.gtui-chan-compact body main > .row.h-100 > .col-3:hover svg.io { margin-right: .25rem !important; }
     html.gtui-chan-compact body main > .row.h-100 > .col-3:hover .card-header .btn, html.gtui-chan-compact body main > .row.h-100 > .col-3:hover > .text-end { display: inline-flex; }
     html.gtui-chan-compact body main > .row.h-100 > .col-3:hover > .d-flex, html.gtui-chan-compact body main > .row.h-100 > .col-3:hover .list-group-item-secondary { display: flex !important; }
+    /* compact strip redesign: tidy rounded tiles instead of a squashed list */
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 { flex-basis: 72px; width: 72px !important; min-width: 72px !important; padding-top: 4px; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 > .card { background: transparent !important; border: 0 !important; margin-bottom: 4px !important; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 .card-header { height: 1px; min-height: 0; padding: 0 !important; margin: 8px 16px; background: var(--ui-border) !important; border: 0 !important; overflow: hidden; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 .list-group { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 2px 0 6px; border: 0; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 .list-group-item { width: 46px; height: 46px; min-height: 0; padding: 0 !important; border-radius: 12px !important; border: 1px solid var(--ui-border) !important; background: var(--ui-panel-2) !important; display: flex; align-items: center; justify-content: center; position: relative; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 .list-group-item:hover { border-color: var(--ui-accent) !important; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 .list-group-item.active { border-color: var(--ui-accent) !important; box-shadow: 0 0 0 1px var(--ui-accent) inset; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3 .list-group-item .badge { position: absolute; top: -4px; right: -4px; font-size: .58rem; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3:hover > .card, html.gtui-chan-compact body main > .row.h-100 > .col-3:hover:focus-within > .card { background: var(--ui-panel) !important; border: 1px solid var(--ui-border) !important; margin-bottom: 8px !important; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3:hover .card-header { height: auto; margin: 0; padding: .5rem 1rem !important; background: var(--ui-panel-2) !important; font-size: 1rem; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3:hover .list-group { align-items: stretch; gap: 0; padding: 0; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3:hover .list-group-item { width: auto; height: auto; padding: .5rem 1rem !important; border-radius: 0 !important; border: 0 !important; border-top: 1px solid var(--ui-border) !important; background: transparent !important; box-shadow: none; justify-content: space-between; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3:hover .list-group-item.active { background: var(--ui-panel-2) !important; border-left: 3px solid var(--ui-accent) !important; }
+    html.gtui-chan-compact body main > .row.h-100 > .col-3:hover .list-group-item .badge { position: static; font-size: .75rem; }
   }
 
   /* phones: channels/contacts stack above the chat instead of squeezing it */
@@ -697,8 +712,8 @@
 
   /* compact channels: with company logos hidden, show initials so the strip isn't blank */
   @media (min-width: 768px) {
-    html.gtui-chan-compact.gtui-hide-logos body main > .row.h-100 > .col-3 .list-group-item[data-gtui-i]::before { content: attr(data-gtui-i); font-size: .78rem; font-weight: 700; color: var(--ui-dim); }
-    html.gtui-chan-compact.gtui-hide-logos body main > .row.h-100 > .col-3:hover .list-group-item[data-gtui-i]::before { display: none; }
+    html.gtui-chan-compact.gtui-hide-logos body main > .row.h-100 > .col-3 .list-group-item[translate="no"][data-gtui-i]::before { content: attr(data-gtui-i); font-size: .78rem; font-weight: 700; color: var(--ui-dim); }
+    html.gtui-chan-compact.gtui-hide-logos body main > .row.h-100 > .col-3:hover .list-group-item[translate="no"][data-gtui-i]::before { display: none; }
   }
   /* narrow rail: show money as 454M instead of overflowing the 56px strip */
   html.gtui-collapsed #app > nav.navbar .btn-group > .btn { font-size: 0 !important; padding: 4px 2px; }
@@ -787,7 +802,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.33';
+    v.textContent = 'Sleek UI v0.9.34';
     bar.appendChild(v);
   }
 
@@ -1721,10 +1736,11 @@
   }
 
   function syncCompactBits() {
-    document.querySelectorAll('main .row.h-100 > .col-3 .list-group-item[translate="no"]').forEach((b) => {
+    document.querySelectorAll('main .row.h-100 > .col-3 .list-group-item[data-channel-id]').forEach((b) => {
       const t = (b.textContent || '').trim();
       const ini = Array.from(t.replace(/^\W+/, '')).slice(0, 2).join('');
       if (b.dataset.gtuiI !== ini) b.dataset.gtuiI = ini;
+      if (t && b.title !== t) b.title = t;
     });
     document.querySelectorAll('#app > nav.navbar .btn-group > .btn').forEach((b) => {
       const t = (b.textContent || '').trim();
