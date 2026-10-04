@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.43
+// @version      0.9.44
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -814,6 +814,23 @@
   #gtui-profit small { opacity: .6; }
   #gtui-profit .msg { margin: 10px 0 0; font-size: .78rem; color: var(--ui-dim); }
 
+  /* ---- "What's new" bar ---- */
+  #gtui-new { position: fixed; top: 0; left: var(--ui-rail-open); right: 0; z-index: 1045; background: var(--ui-accent); color: var(--ui-accent-fg); padding: 8px 18px 8px; box-shadow: 0 4px 16px rgba(0,0,0,.4); font-size: .88rem; }
+  html.gtui-collapsed #gtui-new { left: var(--ui-rail-closed); }
+  html.gtui-right #gtui-new { left: 0; right: var(--ui-rail-open); }
+  html.gtui-right.gtui-collapsed #gtui-new { right: var(--ui-rail-closed); }
+  @media (max-width: 1100px) { #gtui-new { left: var(--ui-rail-closed); } html.gtui-right #gtui-new { left: 0; right: var(--ui-rail-closed); } }
+  @media (max-width: 640px) { #gtui-new { left: 0; right: 0; } html.gtui-right #gtui-new { right: 0; } }
+  #gtui-new .ttl { display: flex; align-items: center; gap: 10px; }
+  #gtui-new .sp { flex: 1 1 auto; }
+  #gtui-new button { background: color-mix(in srgb, var(--ui-accent-fg) 18%, transparent); color: inherit; border: 0; border-radius: 6px; padding: 1px 10px; cursor: pointer; font-size: .8rem; }
+  #gtui-new button:empty { display: none; }
+  #gtui-new button:hover { background: color-mix(in srgb, var(--ui-accent-fg) 32%, transparent); }
+  #gtui-new ul { margin: 4px 0 0; padding-left: 20px; columns: 2 380px; column-gap: 32px; }
+  #gtui-new small { opacity: .7; }
+  #gtui-new[data-collapsed="1"] li:nth-child(n+4) { display: none; }
+  html body #app > main { padding-top: var(--gtui-newh, 0px) !important; }
+
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
   @media (min-width: 2200px) {
@@ -893,7 +910,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.43';
+    v.textContent = 'Sleek UI v' + VERSION;
     bar.appendChild(v);
   }
 
@@ -2310,7 +2327,49 @@
     if (a.parentElement !== menu) menu.appendChild(a);
   }
 
+  /* ---------- "What's new" bar ---------- */
+  const VERSION = '0.9.44';
+  const CHANGELOG = {
+    '0.9.44': ['This "What\'s new" bar - dismiss it and it stays away until the next update'],
+    '0.9.43': ['Price alerts: press 🔔 Alert on any Exchange item', 'Quick ¼ / ½ / Max buttons on the buy form', 'Wishlist: prices next to items and an estimate in Buy all', 'Chat: mention highlights, a filter box, and lighter history that loads more as you scroll up', 'Production profit calculator (Profit in the sidebar)', 'Number keys 1-9, row density, export/import all settings'],
+    '0.9.42': ['Setting to hide the wishlist "Buy all" button'],
+    '0.9.41': ['Faster "Buy all"'],
+    '0.9.40': ['"Buy all" button on the Exchange wishlist'],
+    '0.9.39': ['The purple theme is now called LLM Purple'],
+    '0.9.38': ['Chicken Chaos themes, from the TiT Race site'],
+    '0.9.37': ['Material Design look & feel, plus Material Dark / Light themes'],
+    '0.9.36': ['Channels column can auto-hide and slide out on hover'],
+  };
+  const vnum = (v) => String(v).split('.').reduce((a, n) => a * 1000 + (parseInt(n, 10) || 0), 0);
+  function syncNewBar() {
+    const bar = document.getElementById('gtui-new');
+    const seen = sget('gtui:seen', null);
+    if (seen === VERSION) { if (bar) { bar.remove(); root.style.removeProperty('--gtui-newh'); } return; }
+    if (bar || !document.body) return;
+    const vs = Object.keys(CHANGELOG).filter((v) => !seen || vnum(v) > vnum(seen)).sort((a, b) => vnum(b) - vnum(a)).slice(0, 5);
+    if (!vs.length) { sset('gtui:seen', VERSION); return; }
+    const d = document.createElement('div');
+    d.id = 'gtui-new';
+    const items = [];
+    vs.forEach((v) => CHANGELOG[v].forEach((t) => items.push({ v, t })));
+    const li = (x) => '<li>' + esc(x.t) + (vs.length > 1 ? ' <small>v' + x.v + '</small>' : '') + '</li>';
+    d.innerHTML = '<div class="ttl"><b>✨ Sleek UI ' + (seen ? 'updated to' : 'is installed:') + ' v' + VERSION + '</b>' +
+      '<span class="sp"></span><button type="button" data-a="more">' + (items.length > 3 ? 'Show all ' + items.length : '') + '</button><button type="button" data-a="x" title="Dismiss">✕</button></div>' +
+      '<ul>' + items.map(li).join('') + '</ul>';
+    d.dataset.collapsed = items.length > 3 ? '1' : '';
+    d.addEventListener('click', (e) => {
+      const a = e.target.closest('[data-a]'); if (!a) return;
+      if (a.dataset.a === 'x') { sset('gtui:seen', VERSION); d.remove(); root.style.removeProperty('--gtui-newh'); }
+      else if (a.dataset.a === 'more') { d.dataset.collapsed = ''; a.remove(); fitNewBar(); }
+    });
+    document.body.appendChild(d);
+    fitNewBar();
+  }
+  function fitNewBar() { const d = document.getElementById('gtui-new'); if (d) root.style.setProperty('--gtui-newh', d.offsetHeight + 'px'); }
+  window.addEventListener('resize', fitNewBar);
+
   function syncAll() {
+    syncNewBar();
     ensureProfitNav(); syncQuick(); syncWishPrices(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory();
     ensureBuyAll();
     ensureChickens();
