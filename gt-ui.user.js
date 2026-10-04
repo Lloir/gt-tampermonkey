@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.51
+// @version      0.9.52
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -1436,6 +1436,7 @@
   const themeOf = () => cfg.theme === 'custom' ? Object.assign({}, THEMES.nebula, cfg.custom || {}) : (THEMES[cfg.theme] || THEMES.nebula);
   function applyCfg() {
     const t = themeOf();
+    if (cfg.outlang === 'wd') cfg.outlang = 'es';
     let accent = cfg.accent || t.accent;
     let [r, g, b] = hexRgb(accent);
     let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
@@ -1719,23 +1720,10 @@
     }).join('') + '<span class="sp"></span><button type="button" class="ctl" data-all="open">Expand all</button><button type="button" class="ctl" data-all="close">Collapse all</button>';
   }
 
-  /* ---------- Wingdings <-> text ---------- */
-  const WD_UP = Array.from('✌👌👍👎☜☞☝☟🖐☺😐☹💣☠🏳🏱✈☼💧❄🕆✞🕈✠✡☪');
-  const WD_LO = Array.from('♋♌♍♎♏♐♑♒♓🙰🙵●🔾■□🞐❑❒⬧⧫◆❖⬥⌧⍓⌘');
-  const WD_DI = Array.from('📁📂📄🗏🗐🗄⌛🖮🖰🖲');
-  const WD_DEC = new Map(), WD_ENC = new Map();
-  [[WD_UP, 65], [WD_LO, 97], [WD_DI, 48]].forEach(([arr, base]) => arr.forEach((ch, i) => { const c = String.fromCharCode(base + i); WD_DEC.set(ch, c); WD_ENC.set(c, ch); }));
-  function fromWing(text) {
-    const chars = Array.from(text.replace(/[\uFE0E\uFE0F]/g, '')).filter((c) => !/\s/.test(c));
-    const hits = chars.filter((c) => WD_DEC.has(c)).length;
-    if (hits < 3 || hits < chars.length * 0.6) return null;
-    return Array.from(text.replace(/[\uFE0E\uFE0F]/g, '')).map((c) => WD_DEC.get(c) || c).join('');
-  }
-  const toWing = (text) => Array.from(text).map((c) => WD_ENC.get(c) || c).join('');
 
   /* ---------- Chat auto-translate (opt-in) ---------- */
-  const LANGS = [['en','English'],['cy','Welsh'],['es','Spanish'],['de','German'],['fr','French'],['pt','Portuguese'],['ru','Russian'],['zh-CN','Chinese (Simplified)'],['zh-TW','Chinese (Traditional)'],['ja','Japanese'],['ko','Korean'],['pl','Polish'],['it','Italian'],['nl','Dutch'],['tr','Turkish'],['uk','Ukrainian'],['cs','Czech'],['sv','Swedish'],['da','Danish'],['no','Norwegian'],['fi','Finnish'],['el','Greek'],['hu','Hungarian'],['ro','Romanian'],['bg','Bulgarian'],['hr','Croatian'],['sr','Serbian'],['sk','Slovak'],['sl','Slovenian'],['lt','Lithuanian'],['lv','Latvian'],['et','Estonian'],['ga','Irish'],['gd','Scottish Gaelic'],['is','Icelandic'],['ca','Catalan'],['eu','Basque'],['gl','Galician'],['af','Afrikaans'],['sq','Albanian'],['ar','Arabic'],['he','Hebrew'],['fa','Persian'],['hi','Hindi'],['bn','Bengali'],['ur','Urdu'],['ta','Tamil'],['th','Thai'],['vi','Vietnamese'],['id','Indonesian'],['ms','Malay'],['tl','Filipino'],['sw','Swahili'],['be','Belarusian'],['kk','Kazakh'],['ka','Georgian'],['hy','Armenian'],['mn','Mongolian'],['la','Latin'],['wd','Wingdings (symbols)']];
-  const langOpts = (cur, noWd) => LANGS.filter(([v]) => !(noWd && v === 'wd')).map(([v, l]) => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + l + '</option>').join('');
+  const LANGS = [['en','English'],['cy','Welsh'],['es','Spanish'],['de','German'],['fr','French'],['pt','Portuguese'],['ru','Russian'],['zh-CN','Chinese (Simplified)'],['zh-TW','Chinese (Traditional)'],['ja','Japanese'],['ko','Korean'],['pl','Polish'],['it','Italian'],['nl','Dutch'],['tr','Turkish'],['uk','Ukrainian'],['cs','Czech'],['sv','Swedish'],['da','Danish'],['no','Norwegian'],['fi','Finnish'],['el','Greek'],['hu','Hungarian'],['ro','Romanian'],['bg','Bulgarian'],['hr','Croatian'],['sr','Serbian'],['sk','Slovak'],['sl','Slovenian'],['lt','Lithuanian'],['lv','Latvian'],['et','Estonian'],['ga','Irish'],['gd','Scottish Gaelic'],['is','Icelandic'],['ca','Catalan'],['eu','Basque'],['gl','Galician'],['af','Afrikaans'],['sq','Albanian'],['ar','Arabic'],['he','Hebrew'],['fa','Persian'],['hi','Hindi'],['bn','Bengali'],['ur','Urdu'],['ta','Tamil'],['th','Thai'],['vi','Vietnamese'],['id','Indonesian'],['ms','Malay'],['tl','Filipino'],['sw','Swahili'],['be','Belarusian'],['kk','Kazakh'],['ka','Georgian'],['hy','Armenian'],['mn','Mongolian'],['la','Latin']];
+  const langOpts = (cur) => LANGS.map(([v, l]) => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + l + '</option>').join('');
   const tr = { cache: new Map(), queue: [], busy: 0, pending: new Set(), det: null };
   function sim(a, b) {
     a = a.toLowerCase(); b = b.toLowerCase();
@@ -1820,7 +1808,6 @@
     for (const el of msgs) {
       const clone = el.cloneNode(true); const old = clone.querySelector('.gtui-tr'); if (old) old.remove();
       const text = clone.textContent.trim();
-      const wd0 = fromWing(text); if (wd0) { trShow(el, { text: wd0, src: 'Wingdings' }); continue; }
       const latin = /^[\p{Script=Latin}\p{N}\p{P}\p{S}\s]*$/u.test(text);   // Thai / Cyrillic / CJK words can be short and still real
       if (text.length > 600 || !/\p{L}/u.test(text) || (latin ? !/\p{L}{3}/u.test(text) : text.length < 2)) continue;
       if (base0(tl) === 'en' && looksEnglish(text)) continue;   /* obviously English: no need to ask the service */
@@ -1859,7 +1846,7 @@
   async function sendTagged(ta, tag, resend) {
     tagBusy = true; outBusy(true);
     try {
-      const r = tag.code === 'wd' ? toWing(tag.text) : (tag.text ? await webTranslate(tag.text, tag.code, 'auto') : '');
+      const r = tag.text ? await webTranslate(tag.text, tag.code, 'auto') : '';
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(ta, r || tag.text);
       ta.dispatchEvent(new Event('input', { bubbles: true }));
     } catch (err) {
@@ -1908,7 +1895,7 @@
         const text = t.value.trim(); if (!text) return;
         b.disabled = true; const old = b.textContent; b.textContent = '…';
         try {
-          const r = cfg.outlang === 'wd' ? toWing(text) : await webTranslate(text, cfg.outlang || 'es', 'auto');
+          const r = await webTranslate(text, cfg.outlang || 'es', 'auto');
           Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(t, r);
           t.dispatchEvent(new Event('input', { bubbles: true })); t.focus();
         } catch (err) { console.warn('[gtui] translate failed', err); b.textContent = 'failed'; setTimeout(() => { b.textContent = old; }, 1500); }
@@ -2396,7 +2383,7 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.51';
+  const VERSION = '0.9.52';
   const CHANGELOG = {
     '0.9.51': ['New chat setting "SL Spacing": the game\'s original message bubbles and gaps, in your theme\'s colours'],
     '0.9.50': ['Translation: pressing Enter twice no longer sends the untranslated message first, a "Translating…" indicator while it works, "translating…" placeholders on incoming lines, and failed translations are retried'],
