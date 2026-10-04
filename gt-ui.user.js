@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.55
+// @version      0.9.56
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -1426,6 +1426,8 @@
     matdark:  { name: 'Material Dark', mat: true, bg: '#141218', panel: '#211f26', p2: '#2b2930', border: '#49454f', fg: '#e6e0e9', dim: '#cac4d0', accent: '#d0bcff' },
     matlight: { name: 'Material Light', mat: true, bg: '#fef7ff', panel: '#f3edf7', p2: '#ece6f0', border: '#cac4d0', fg: '#1d1b20', dim: '#49454f', accent: '#6750a4' },
     chickdark: { name: 'Chicken Chaos (Dark)', mat: true, chick: true, bg: '#0d0904', panel: '#1a1208', p2: '#241a0c', border: '#3d3118', fg: '#fbeed0', dim: '#d6c5a0', accent: '#ffd54a' },
+    shielddark: { name: 'Nanoweave Shielding (Dark)', mat: true, chick: true, faces: ['🛡️', '💧', '🔹', '🫧', '🌀'], bg: '#04101a', panel: '#082030', p2: '#0c2c42', border: '#17506e', fg: '#e0f2fb', dim: '#98cfec', accent: '#3fd6b0' },
+    shieldlight: { name: 'Nanoweave Shielding (Light)', mat: true, chick: true, faces: ['🛡️', '💧', '🔹', '🫧', '🌀'], bg: '#c7e4f4', panel: '#d6ecf8', p2: '#b4d9ee', border: '#7fb8d9', fg: '#06283d', dim: '#1d4f70', accent: '#0a6b8f' },
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
@@ -1961,11 +1963,15 @@
 
   /* Chicken Chaos themes (from the TiT Race site): a few chickens drift down the screen */
   function ensureChickens() {
-    if (document.getElementById('gtui-chix') || !document.body) return;
-    const d = document.createElement('div');
+    if (!document.body) return;
+    const faces = THEMES[cfg.theme] && THEMES[cfg.theme].faces || ['🐔', '🐓', '🐤', '🥚', '🐣'];
+    let d = document.getElementById('gtui-chix');
+    if (d && d.dataset.f === faces.join('')) return;
+    if (d) d.remove();
+    d = document.createElement('div');
     d.id = 'gtui-chix';
+    d.dataset.f = faces.join('');
     d.setAttribute('aria-hidden', 'true');
-    const faces = ['🐔', '🐓', '🐤', '🥚', '🐣'];
     for (let i = 0; i < 14; i++) {
       const sp = document.createElement('span');
       sp.textContent = faces[i % faces.length];
@@ -2384,8 +2390,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.55';
+  const VERSION = '0.9.56';
   const CHANGELOG = {
+    '0.9.56': ['New themes: Nanoweave Shielding (Dark and Light), blue/green with the Material look, dotted background and drifting shields and droplets'],
     '0.9.55': ['Chat now uses the full window width (removed the old 1400px cap on very wide screens)'],
     '0.9.54': ['SL Spacing: the header bar now hugs the name and time instead of stretching across a wide screen'],
     '0.9.53': ['Chat timestamps now sit next to the name instead of at the far edge on wide screens'],
