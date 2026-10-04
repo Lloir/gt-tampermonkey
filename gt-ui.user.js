@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.36
+// @version      0.9.37
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -701,6 +701,44 @@
     #app > nav.navbar .btn-group > .btn::after { content: attr(data-gtui-s); font-size: 10px; letter-spacing: -.02em; }
   }
 
+  /* light themes: the game paints the offers depth bar with a hard-coded dark gradient */
+  html.gtui-light body .table tbody[style*="linear-gradient"] { background: none !important; }
+  html.gtui-light body .table tbody[style*="linear-gradient"] tr { background: color-mix(in srgb, var(--ui-accent) 6%, transparent); }
+
+  /* ============ MATERIAL look & feel (Settings -> Theme -> Look & feel, or the Material themes) ============ */
+  html.gtui-material body { font-family: Roboto, "Segoe UI", system-ui, -apple-system, sans-serif; letter-spacing: .005em; }
+  html.gtui-material body .card, html.gtui-material body .box-section, html.gtui-material body .modal-content, html.gtui-material body .offcanvas {
+    border: 0 !important; border-radius: 16px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15);
+  }
+  html.gtui-material body .card-header { border-radius: 16px 16px 0 0 !important; border-bottom: 0 !important; }
+  html.gtui-material body #app > nav.navbar { border: 0 !important; background: var(--ui-panel) !important; box-shadow: 1px 0 3px rgba(0,0,0,.3) !important; }
+  html.gtui-material body .navbar-menu .nav-link { border-radius: 999px; border-left: 0 !important; padding: 10px 16px !important; font-weight: 500; }
+  html.gtui-material body .navbar-menu .nav-link:hover { background: color-mix(in srgb, var(--ui-fg) 8%, transparent); }
+  html.gtui-material body .navbar-menu .nav-link.active { background: color-mix(in srgb, var(--ui-accent) 24%, transparent) !important; color: var(--ui-hi) !important; border-left: 0 !important; }
+  html.gtui-material body .btn { border-radius: 999px !important; font-weight: 500; letter-spacing: .02em; text-transform: none; box-shadow: none; }
+  html.gtui-material body .btn-primary { box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+  html.gtui-material body .btn:hover { filter: brightness(1.08); }
+  html.gtui-material body .btn-square, html.gtui-material body .btn-sm.btn-square { border-radius: 12px !important; }
+  html.gtui-material body .form-control, html.gtui-material body .form-select, html.gtui-material body .input-group-text, html.gtui-material body textarea.form-control {
+    background-color: var(--ui-p2, var(--ui-panel-2)) !important; border: 0 !important; border-bottom: 2px solid var(--ui-dim) !important; border-radius: 8px 8px 0 0 !important; box-shadow: none !important;
+  }
+  html.gtui-material body .form-control:focus, html.gtui-material body .form-select:focus { border-bottom-color: var(--ui-accent) !important; }
+  html.gtui-material body .nav-tabs .nav-link { border-radius: 0 !important; text-transform: none; font-weight: 500; letter-spacing: .02em; }
+  html.gtui-material body .nav-tabs .nav-link.active { background: transparent !important; border-bottom: 3px solid var(--ui-accent) !important; border-radius: 3px 3px 0 0 !important; color: var(--ui-accent) !important; }
+  html.gtui-material body .badge, html.gtui-material body .badge-button { border-radius: 8px; font-weight: 500; }
+  html.gtui-material body .dropdown-menu, html.gtui-material body .popover { border: 0 !important; border-radius: 12px !important; box-shadow: 0 2px 6px 2px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.3) !important; }
+  html.gtui-material body .dropdown-item { border-radius: 0; }
+  html.gtui-material body .list-group-item { border-color: color-mix(in srgb, var(--ui-fg) 10%, transparent) !important; }
+  html.gtui-material body .list-group-item-action:hover, html.gtui-material body .table tbody tr:hover > * { background: color-mix(in srgb, var(--ui-fg) 8%, transparent) !important; }
+  html.gtui-material body .list-group-item.active { border-left: 0 !important; border-radius: 12px !important; background: color-mix(in srgb, var(--ui-accent) 24%, transparent) !important; }
+  html.gtui-material body .table { --bs-table-border-color: color-mix(in srgb, var(--ui-fg) 10%, transparent); }
+  html.gtui-material body .btn-building { border-radius: 16px !important; border: 0 !important; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  html.gtui-material body #gtui-minfo, html.gtui-material body #gtui-cats, html.gtui-material body #gtui-set, html.gtui-material body #gtui-rs, html.gtui-material body #gtui-keys { border-radius: 16px; }
+  html.gtui-material body #gtui-minfo, html.gtui-material body #gtui-cats { border: 0; box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15); }
+  html.gtui-material body #gtui-cats button.on, html.gtui-material body #gtui-mlist .r.sel { background: color-mix(in srgb, var(--ui-accent) 24%, transparent); border-left-color: transparent; border-radius: 12px; }
+  html.gtui-material body .com-msg:hover { border-radius: 8px; }
+
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
   @media (min-width: 2200px) {
@@ -780,7 +818,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.36';
+    v.textContent = 'Sleek UI v0.9.37';
     bar.appendChild(v);
   }
 
@@ -1249,9 +1287,11 @@
     crimson:  { name: 'Crimson',  bg: '#13060a', panel: '#200b12', p2: '#2e101b', border: '#4d1f2e', fg: '#ffdce3', dim: '#c48a99', accent: '#ec3f62' },
     graphite: { name: 'Graphite', bg: '#0c0c0e', panel: '#151517', p2: '#1e1e22', border: '#33333a', fg: '#e6e6ea', dim: '#9b9ba6', accent: '#6f86ff' },
     terminal: { name: 'Terminal', bg: '#020502', panel: '#061006', p2: '#0c1c0c', border: '#1d3f1d', fg: '#c9f7c9', dim: '#7fae7f', accent: '#3ddc3d' },
+    matdark:  { name: 'Material Dark', mat: true, bg: '#141218', panel: '#211f26', p2: '#2b2930', border: '#49454f', fg: '#e6e0e9', dim: '#cac4d0', accent: '#d0bcff' },
+    matlight: { name: 'Material Light', mat: true, bg: '#fef7ff', panel: '#f3edf7', p2: '#ece6f0', border: '#cac4d0', fg: '#1d1b20', dim: '#49454f', accent: '#6750a4' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
   const hexRgb = (h) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [124, 92, 255]; };
   const CUSTOM_KEYS = [['bg', 'Page background'], ['panel', 'Panels'], ['p2', 'Raised panels / hover'], ['border', 'Borders'], ['fg', 'Text'], ['dim', 'Dim text'], ['accent', 'Accent']];
@@ -1269,10 +1309,13 @@
     st.setProperty('--ui-accent', accent); st.setProperty('--ui-accent-rgb', r + ', ' + g + ', ' + b);
     st.setProperty('--ui-accent-fg', lum > 0.62 ? '#0b0b12' : '#fff');
     const [br, bg2, bb] = hexRgb(t.bg);
-    st.setProperty('--ui-hi', (0.299 * br + 0.587 * bg2 + 0.114 * bb) / 255 > 0.5 ? '#000' : '#fff');   // emphasised text: white on dark themes, black on light ones
+    const isLight = (0.299 * br + 0.587 * bg2 + 0.114 * bb) / 255 > 0.5;
+    root.classList.toggle('gtui-light', isLight);
+    st.setProperty('--ui-hi', isLight ? '#000' : '#fff');   // emphasised text: white on dark themes, black on light ones
     root.classList.toggle('gtui-hide-avatars', !!cfg.hideAvatars);
     root.classList.toggle('gtui-hide-logos', !!cfg.hideLogos);
     root.classList.toggle('gtui-hide-portraits', !!cfg.hidePortraits);
+    root.classList.toggle('gtui-material', cfg.style === 'material' || !!t.mat);
     root.classList.toggle('gtui-right', cfg.side === 'right');
     root.classList.toggle('gtui-qstack', cfg.quick === 'stack');
     root.classList.toggle('gtui-hide-links', !cfg.showLinks);
@@ -1296,6 +1339,8 @@
       '<div class="hd"><b>Sleek UI</b><button type="button" class="x" data-a="close" title="Close">✕</button></div>' +
       '<div class="sec">Theme</div><div class="themes">' +
       Object.entries(THEMES).map(([k, v]) => '<button type="button" class="th' + (cfg.theme === k ? ' on' : '') + '" data-t="' + k + '" style="--a:' + v.accent + ';--b:' + v.panel + '"><i></i>' + v.name + '</button>').join('') +
+      '<label class="rw" style="grid-column:1/-1;margin:2px 0"><span>Look &amp; feel</span><select data-k="style">' +
+      [['default', 'Sleek (default)'], ['material', 'Material Design']].map(([v, l]) => '<option value="' + v + '"' + ((cfg.style || 'default') === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       '<button type="button" class="th' + (cfg.theme === 'custom' ? ' on' : '') + '" data-t="custom" style="grid-column:1/-1;--a:' + (cfg.custom && cfg.custom.accent || t.accent) + ';--b:' + (cfg.custom && cfg.custom.panel || t.panel) + '"><i></i>Custom theme…</button>' +
       '</div>' +
       (cfg.theme === 'custom'
