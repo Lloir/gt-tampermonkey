@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.32
+// @version      0.9.33
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -695,6 +695,19 @@
   html.gtui-hide-keys #gtui-keys, html.gtui-collapsed #gtui-keys { display: none !important; }
   @media (max-height: 1000px), (max-width: 1100px) { #gtui-keys { display: none !important; } }
 
+  /* compact channels: with company logos hidden, show initials so the strip isn't blank */
+  @media (min-width: 768px) {
+    html.gtui-chan-compact.gtui-hide-logos body main > .row.h-100 > .col-3 .list-group-item[data-gtui-i]::before { content: attr(data-gtui-i); font-size: .78rem; font-weight: 700; color: var(--ui-dim); }
+    html.gtui-chan-compact.gtui-hide-logos body main > .row.h-100 > .col-3:hover .list-group-item[data-gtui-i]::before { display: none; }
+  }
+  /* narrow rail: show money as 454M instead of overflowing the 56px strip */
+  html.gtui-collapsed #app > nav.navbar .btn-group > .btn { font-size: 0 !important; padding: 4px 2px; }
+  html.gtui-collapsed #app > nav.navbar .btn-group > .btn::after { content: attr(data-gtui-s); font-size: 10px; letter-spacing: -.02em; }
+  @media (max-width: 1100px) and (min-width: 641px) {
+    #app > nav.navbar .btn-group > .btn { font-size: 0 !important; padding: 4px 2px; text-align: center; }
+    #app > nav.navbar .btn-group > .btn::after { content: attr(data-gtui-s); font-size: 10px; letter-spacing: -.02em; }
+  }
+
   /* ============ RESPONSIVE ============ */
   /* very wide: cap line length of chat so it stays readable */
   @media (min-width: 2200px) {
@@ -774,7 +787,7 @@
     bar.appendChild(b);
     const v = document.createElement('div');
     v.id = 'gtui-ver';
-    v.textContent = 'Sleek UI v0.9.32';
+    v.textContent = 'Sleek UI v0.9.33';
     bar.appendChild(v);
   }
 
@@ -1455,7 +1468,7 @@
     bar.querySelectorAll(':scope > span, :scope > button').forEach((el) => {
       if (el.id === 'gtui-notes-nav' || el.hasAttribute('data-popup-id')) return;
       const u = el.querySelector('svg use');
-      const ref = u && (u.getAttribute('xlink:href') || u.getAttribute('href') || '');
+      const ref = (u && (u.getAttribute('xlink:href') || u.getAttribute('href'))) || '';
       if (ref.endsWith('#notebook') && !el.classList.contains('gtui-dupe')) el.classList.add('gtui-dupe');
     });
   }
@@ -1707,8 +1720,28 @@
     bar.appendChild(d);
   }
 
+  function syncCompactBits() {
+    document.querySelectorAll('main .row.h-100 > .col-3 .list-group-item[translate="no"]').forEach((b) => {
+      const t = (b.textContent || '').trim();
+      const ini = Array.from(t.replace(/^\W+/, '')).slice(0, 2).join('');
+      if (b.dataset.gtuiI !== ini) b.dataset.gtuiI = ini;
+    });
+    document.querySelectorAll('#app > nav.navbar .btn-group > .btn').forEach((b) => {
+      const t = (b.textContent || '').trim();
+      let short = t;
+      const m = /^([\d,]+)$/.exec(t);
+      if (m) {
+        const n = parseInt(m[1].replace(/,/g, ''), 10);
+        short = n >= 1e9 ? (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B' : n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : n >= 1e4 ? Math.round(n / 1e3) + 'k' : t;
+      }
+      if (b.dataset.gtuiS !== short) b.dataset.gtuiS = short;
+      if (b.title !== t && /^[\d,]+$/.test(t)) b.title = t;
+    });
+  }
+
   function syncAll() {
     ensureKeys();
+    syncCompactBits();
     syncBlocked();
     ensureLinks(); ensureNotes(); ensureToggle(); labelNav(); syncCats(); syncXchToggle();
     syncMarket(); syncInfo(); syncResearch(); syncTranslate(); syncOutbound();
