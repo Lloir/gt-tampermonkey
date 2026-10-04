@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.46
+// @version      0.9.47
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -831,20 +831,19 @@
   #gtui-new[data-collapsed="1"] li:nth-child(n+4) { display: none; }
   html body #app > main { padding-top: var(--gtui-newh, 0px) !important; }
 
-  /* ---- Multi-chat ---- */
-  #gtui-multi { position: fixed; top: 0; bottom: 0; left: var(--ui-rail-open); right: 0; z-index: 1040; display: none; flex-direction: column; background: var(--ui-bg); }
-  #gtui-multi.open { display: flex; }
-  html.gtui-collapsed #gtui-multi { left: var(--ui-rail-closed); }
-  html.gtui-right #gtui-multi { left: 0; right: var(--ui-rail-open); }
-  html.gtui-right.gtui-collapsed #gtui-multi { right: var(--ui-rail-closed); }
-  @media (max-width: 1100px) { #gtui-multi { left: var(--ui-rail-closed); } html.gtui-right #gtui-multi { left: 0; right: var(--ui-rail-closed); } }
-  @media (max-width: 640px) { #gtui-multi { left: 0; right: 0; bottom: 58px; } html.gtui-right #gtui-multi { right: 0; } }
-  #gtui-multi .bar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: var(--ui-panel); border-bottom: 1px solid var(--ui-border); color: var(--ui-fg); }
+  /* ---- Multi-chat (inside the Comms screen) ---- */
+  #gtui-multi { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; height: 100%; padding: 12px 0; }
+  html.gtui-multi-on body main > .row.h-100 > .col.min-w-0 { display: none !important; }
+  #gtui-multi .bar { display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: var(--ui-panel); border: 1px solid var(--ui-border); border-radius: 10px; color: var(--ui-fg); }
   #gtui-multi .bar b { color: var(--ui-hi); }
   #gtui-multi .bar .sp { flex: 1 1 auto; }
   #gtui-multi .bar small { color: var(--ui-dim); }
-  #gtui-multi .bar button { background: none; border: 0; color: var(--ui-dim); font-size: 1.1rem; cursor: pointer; }
+  #gtui-multi .bar button { background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 2px 12px; cursor: pointer; }
+  #gtui-multi .bar button:hover { border-color: var(--ui-accent); color: var(--ui-hi); }
   #gtui-multi select { background: var(--ui-bg); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 6px; padding: 2px 8px; }
+  #gtui-multi .pane.act { border-color: var(--ui-accent); box-shadow: 0 0 0 1px var(--ui-accent) inset; }
+  #gtui-multi-btn { flex: 0 0 auto; background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 2px 10px; font-size: .8rem; cursor: pointer; }
+  #gtui-multi-btn:hover { border-color: var(--ui-accent); color: var(--ui-hi); }
   #gtui-multi .grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 8px; padding: 8px; }
   @media (max-width: 900px) { #gtui-multi .grid { grid-template-columns: 1fr; grid-auto-rows: minmax(0, 1fr); } }
   #gtui-multi .pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border: 1px solid var(--ui-border); border-radius: 10px; overflow: hidden; background: var(--ui-panel); }
@@ -1064,7 +1063,7 @@
       .filter(([, label]) => !q || label.toLowerCase().includes(q))
       .map(([id, label]) => ({ label, hint: 'screen', run: () => { const l = navLink(id); if (l) l.click(); } }));
     if (!q || 'settings theme options hide images'.includes(q)) palItems.push({ label: 'Settings – themes & hide images', hint: 'sleek ui', run: openSettings });
-    if (!q || 'multi chat several channels'.includes(q)) palItems.push({ label: 'Multi-chat (channels side by side)', hint: 'sleek ui', run: openMulti });
+    if (cfg.multiEnabled !== false && (!q || 'multi chat several channels'.includes(q))) palItems.push({ label: 'Multi-chat (channels side by side)', hint: 'sleek ui', run: openMulti });
     if (!q || 'profit production calculator'.includes(q)) palItems.push({ label: 'Production profit calculator', hint: 'sleek ui', run: openProfit });
     LINKS.forEach((l) => { if (!q || l.label.toLowerCase().includes(q)) palItems.push({ label: l.label + ' ↗', hint: 'link', run: () => window.open(l.url, '_blank', 'noopener') }); });
     if (q) palItems.push({ label: 'Search market for “' + palIn.value.trim() + '”', hint: 'exchange', run: () => searchMarket(palIn.value.trim()) });
@@ -1434,7 +1433,7 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
   const hexRgb = (h) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [124, 92, 255]; };
   const CUSTOM_KEYS = [['bg', 'Page background'], ['panel', 'Panels'], ['p2', 'Raised panels / hover'], ['border', 'Borders'], ['fg', 'Text'], ['dim', 'Dim text'], ['accent', 'Accent']];
@@ -1511,6 +1510,7 @@
       '<label class="rw"><span>Max chat width</span><select data-k="chatMax">' +
       [['', 'No limit'], ['800', 'Narrow (800px)'], ['1000', 'Medium (1000px)'], ['1300', 'Wide (1300px)'], ['1700', 'Extra wide (1700px)']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.chatMax) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       chk('hideContacts', 'Hide the contacts list') +
+      chk('multiEnabled', 'Enable multi-chat (several channels side by side)') +
       '<div class="sec">Blocked players</div>' +
       '<div class="blk"><input type="text" data-b="in" placeholder="Company name (without the [TAG])" maxlength="60"><button type="button" class="sm" data-a="b-add">Block</button></div>' +
       '<div class="blist">' + ((cfg.blocked || []).length ? cfg.blocked.map((n) => '<span class="bchip">' + esc(n) + '<button type="button" data-a="b-del" data-n="' + esc(n) + '" title="Unblock">✕</button></span>').join('') : '<span class="note" style="margin:0">Nobody blocked. Tip: Alt+click a name in chat to block it.</span>') + '</div>' +
@@ -2240,6 +2240,10 @@
     let ab = document.getElementById('gtui-arch-btn');
     if (!ab) { ab = document.createElement('button'); ab.id = 'gtui-arch-btn'; ab.type = 'button'; ab.title = 'Download the whole history of this channel'; ab.textContent = '⤓ History'; ab.addEventListener('click', openArchive); }
     if (ab.parentElement !== hd) hd.insertBefore(ab, f.nextSibling);
+    let mb = document.getElementById('gtui-multi-btn');
+    if (EMBED || cfg.multiEnabled === false) { if (mb) mb.remove(); return; }
+    if (!mb) { mb = document.createElement('button'); mb.id = 'gtui-multi-btn'; mb.type = 'button'; mb.title = 'Show several channels side by side'; mb.textContent = '⊞ Multi-chat'; mb.addEventListener('click', () => { cfg.multiOn = true; saveCfg(); schedule(); }); }
+    if (mb.parentElement !== hd) hd.insertBefore(mb, ab.nextSibling);
   }
   function applyChatFilter() {
     document.querySelectorAll('main .com-group').forEach((g) => {
@@ -2376,10 +2380,11 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.46';
+  const VERSION = '0.9.47';
   const CHANGELOG = {
+    '0.9.47': ['Multi-chat now lives inside Comms: press "⊞ Multi-chat" in the chat header'],
     '0.9.46': ['Chat history download: press "⤓ History" in a chat header to load the whole channel and save it as text or JSON'],
-    '0.9.45': ['Multi-chat: several channels side by side (Multi-chat in the sidebar)'],
+    '0.9.45': ['Multi-chat: several channels side by side'],
     '0.9.44': ['This "What\'s new" bar - dismiss it and it stays away until the next update'],
     '0.9.43': ['Price alerts: press 🔔 Alert on any Exchange item', 'Quick ¼ / ½ / Max buttons on the buy form', 'Wishlist: prices next to items and an estimate in Buy all', 'Chat: mention highlights, a filter box, and lighter history that loads more as you scroll up', 'Production profit calculator (Profit in the sidebar)', 'Number keys 1-9, row density, export/import all settings'],
     '0.9.42': ['Setting to hide the wishlist "Buy all" button'],
@@ -2438,47 +2443,57 @@
     }
     return cfg.multi;
   }
-  function openMulti() {
-    let d = document.getElementById('gtui-multi');
-    if (!d) {
-      d = document.createElement('div'); d.id = 'gtui-multi'; document.body.appendChild(d);
-      d.addEventListener('click', (e) => { if (e.target.closest('[data-a="x"]')) closeMulti(); });
-      d.addEventListener('change', (e) => {
-        const el = e.target, m = multiState();
-        if (el.dataset.m === 'n') { m.n = +el.value; saveCfg(); renderMulti(); }
-        else if (el.dataset.m === 'c') {
-          const i = +el.dataset.i; m.ids[i] = el.value; saveCfg();
-          const fr = d.querySelectorAll('iframe')[i]; if (fr) fr.src = '/comms/' + el.value;
-        }
-      });
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && d.classList.contains('open') && !e.target.closest('iframe')) closeMulti(); });
-    }
-    d.classList.add('open'); renderMulti();
+  let multiActive = 0;
+  function openMulti() {   // from the palette: switch the Comms screen to multi-chat
+    cfg.multiOn = true; saveCfg();
+    const l = navLink('message-lines'); if (l) l.click();
+    schedule();
   }
-  function closeMulti() { const d = document.getElementById('gtui-multi'); if (d) { d.classList.remove('open'); d.innerHTML = ''; } }
-  function renderMulti() {
-    const d = document.getElementById('gtui-multi'); if (!d || !d.classList.contains('open')) return;
+  function renderMulti(d) {
     const m = multiState(), ch = knownChans();
+    if (multiActive >= m.n) multiActive = 0;
     const opts = (cur) => Object.entries(ch).map(([id, n]) => '<option value="' + id + '"' + (id === cur ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + (ch[cur] ? '' : '<option value="' + esc(cur) + '" selected>#' + esc(cur) + '</option>');
     let panes = '';
-    for (let i = 0; i < m.n; i++) panes += '<div class="pane"><div class="ph"><select data-m="c" data-i="' + i + '">' + opts(m.ids[i]) + '</select></div><iframe name="gtui-embed" src="/comms/' + esc(m.ids[i]) + '" title="Chat ' + (i + 1) + '"></iframe></div>';
-    d.innerHTML = '<div class="bar"><b>Multi-chat</b><label>Panes <select data-m="n">' + [2, 3, 4].map((n) => '<option' + (m.n === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label>' +
-      '<span class="sp"></span><small>Each pane is a full copy of the game page, so it uses extra memory.</small><button type="button" data-a="x" title="Close">✕</button></div>' +
+    for (let i = 0; i < m.n; i++) panes += '<div class="pane' + (i === multiActive ? ' act' : '') + '" data-i="' + i + '"><div class="ph"><select data-m="c" data-i="' + i + '">' + opts(m.ids[i]) + '</select></div><iframe name="gtui-embed" src="/comms/' + esc(m.ids[i]) + '" title="Chat ' + (i + 1) + '"></iframe></div>';
+    d.innerHTML = '<div class="bar"><b>Multi-chat</b><label>Panes <select data-m="n">' + [1, 2, 3, 4].map((n) => '<option' + (m.n === n ? ' selected' : '') + '>' + n + (n === 1 ? ' (normal chat)' : '') + '</option>').join('') + '</select></label>' +
+      '<span class="sp"></span><small>Click a channel in the list to put it in the highlighted pane.</small><button type="button" data-a="single">Single chat</button></div>' +
       '<div class="grid" style="--n:' + m.n + '">' + panes + '</div>';
   }
-  function ensureMultiNav() {
-    const menu = document.querySelector('#app > nav.navbar .navbar-menu');
-    let a = document.getElementById('gtui-multi-nav');
-    if (!menu) return;
-    if (!a) {
-      a = document.createElement('a'); a.id = 'gtui-multi-nav'; a.className = 'nav-link'; a.setAttribute('data-gtui-label', 'Multi-chat'); a.title = 'Several chat channels side by side'; a.setAttribute('role', 'button');
-      const u = document.querySelector('#app > nav.navbar svg use');
-      const base = u ? (u.getAttribute('xlink:href') || u.getAttribute('href') || '').split('#')[0] : '';
-      a.innerHTML = '<svg class="iu"><use xlink:href="' + base + '#message-lines"></use></svg>';
-      a.addEventListener('click', openMulti);
+  function ensureMulti() {
+    const row = document.querySelector('main > .row.h-100');
+    const chatCol = row && row.querySelector(':scope > .col.min-w-0');
+    let d = document.getElementById('gtui-multi');
+    const on = !!(row && chatCol && cfg.multiOn && cfg.multiEnabled !== false);
+    root.classList.toggle('gtui-multi-on', on);
+    if (!on) { if (d) d.remove(); return; }
+    if (!d) {
+      d = document.createElement('div'); d.id = 'gtui-multi';
+      d.addEventListener('click', (e) => {
+        if (e.target.closest('[data-a="single"]')) { cfg.multiOn = false; saveCfg(); schedule(); return; }
+        const pane = e.target.closest('.pane');
+        if (pane && +pane.dataset.i !== multiActive) { multiActive = +pane.dataset.i; d.querySelectorAll('.pane').forEach((x) => x.classList.toggle('act', x === pane)); }
+      });
+      d.addEventListener('change', (e) => {
+        const el = e.target, m = multiState();
+        if (el.dataset.m === 'n') { const n = parseInt(el.value, 10); if (n <= 1) { cfg.multiOn = false; saveCfg(); schedule(); return; } m.n = n; saveCfg(); renderMulti(d); }
+        else if (el.dataset.m === 'c') { const i = +el.dataset.i; m.ids[i] = el.value; saveCfg(); const fr = d.querySelectorAll('iframe')[i]; if (fr) fr.src = '/comms/' + el.value; }
+      });
+      renderMulti(d);
     }
-    if (a.parentElement !== menu) menu.appendChild(a);
+    if (d.previousElementSibling !== chatCol) row.insertBefore(d, chatCol.nextSibling);
   }
+  // with multi-chat on, clicking a channel in the left list fills the highlighted pane instead of switching the hidden single chat
+  document.addEventListener('click', (e) => {
+    if (EMBED || !cfg.multiOn) return;
+    const it = e.target.closest && e.target.closest('main .row.h-100 > .col-3 .list-group-item[data-channel-id]');
+    const d = document.getElementById('gtui-multi');
+    if (!it || !d) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const m = multiState(); m.ids[multiActive] = it.dataset.channelId; saveCfg();
+    const fr = d.querySelectorAll('iframe')[multiActive], sel = d.querySelectorAll('.pane select')[multiActive];
+    if (fr) fr.src = '/comms/' + it.dataset.channelId;
+    if (sel) { if (![...sel.options].some((o) => o.value === it.dataset.channelId)) sel.add(new Option(it.textContent.trim() || '#' + it.dataset.channelId, it.dataset.channelId)); sel.value = it.dataset.channelId; }
+  }, true);
 
   /* ---------- Chat archive: load the whole history of a channel and save it as a file ---------- */
   const arch = { run: false, stop: false };
@@ -2557,7 +2572,7 @@
 
   function syncAll() {
     if (EMBED) { syncBlocked(); syncTranslate(); syncOutbound(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory(); return; }
-    learnChannels(); ensureMultiNav();
+    learnChannels(); ensureMulti();
     syncNewBar();
     ensureProfitNav(); syncQuick(); syncWishPrices(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory();
     ensureBuyAll();
