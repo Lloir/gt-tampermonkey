@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.57
+// @version      0.9.66
 // @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -27,6 +27,28 @@
 
   const KEY = 'gtui:collapsed';
   const root = document.documentElement;
+  const SILENT_FRAME = window.top !== window;
+  if (SILENT_FRAME) {
+    root.classList.add('gtui-silent-frame');
+    // The game starts a full client in each chat/Exchange iframe. Keep only the
+    // top-level client's desktop notifications and notification sounds.
+    const SilentNotification = function () { return { close() {} }; };
+    SilentNotification.permission = 'denied';
+    SilentNotification.requestPermission = () => Promise.resolve('denied');
+    try { Object.defineProperty(window, 'Notification', { configurable: true, writable: true, value: SilentNotification }); }
+    catch (e) {
+      try { window.Notification = SilentNotification; }
+      catch (ignored) { /* Some browsers already deny notifications in frames. */ }
+    }
+    try {
+      const originalPlay = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function (...args) {
+        try { if (new URL(this.currentSrc || this.src, location.href).pathname.startsWith('/sfx/')) return Promise.resolve(); }
+        catch (e) { /* Keep normal playback for other media. */ }
+        return originalPlay.apply(this, args);
+      };
+    } catch (e) { /* Audio controls may be locked by the browser. */ }
+  }
 
   const store = {
     get() { try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } },
@@ -56,6 +78,8 @@
   html.gtc-invert-page img, html.gtc-invert-page canvas { filter: none !important; }
 
   html body { background: var(--ui-bg) !important; color: var(--ui-fg); }
+  html.gtui-silent-frame .toast-container, html.gtui-silent-frame #gtui-toasts { display: none !important; }
+  html.gtui-wallpaper body { background-image: var(--gtui-wallpaper) !important; background-position: center center !important; background-size: cover !important; background-repeat: no-repeat !important; background-attachment: fixed !important; }
   /* make the game's own Bootstrap text colours follow the theme (needed for light custom themes) */
   html body { --bs-body-color: var(--ui-fg); --bs-body-bg: var(--ui-bg); --bs-secondary-color: var(--ui-dim); --bs-tertiary-color: var(--ui-dim); --bs-emphasis-color: var(--ui-hi); --bs-border-color: var(--ui-border); --bs-heading-color: var(--ui-hi); --bs-link-color: var(--ui-accent); }
   html body .link-light, html body .text-light, html body .text-white, html body .text-body, html body .text-body-secondary, html body .text-body-tertiary { color: var(--ui-fg) !important; }
@@ -292,6 +316,41 @@
   html body .badge-button { background: var(--ui-panel-2); color: var(--ui-dim); border: 1px solid var(--ui-border); }
 
   /* ============ SCREEN: Base (bases, fleet, building grid) ============ */
+  .gtui-base-details-card.gtui-base-details-closed > :not(.card-header) { display: none !important; }
+  .gtui-base-details-card > .card-header { display: flex; align-items: center; gap: 8px; }
+  .gtui-base-details-card > .card-header > .nav, .gtui-base-details-card > .card-header > .nav-tabs { flex: 1 1 auto; min-width: 0; }
+  #gtui-base-details-toggle { flex: 0 0 auto; margin-left: auto; padding: 2px 8px; color: var(--ui-dim); background: transparent; border: 1px solid var(--ui-border); border-radius: 5px; cursor: pointer; }
+  #gtui-base-details-toggle:hover { color: var(--ui-hi); border-color: var(--ui-accent); }
+  html body .gtui-bases-card > .card-header { display: flex; align-items: center; gap: 8px; min-width: 0; cursor: pointer; }
+  html body .gtui-bases-card > .card-header:hover { background: var(--ui-panel-3) !important; }
+  .gtui-bases-card .gtui-bases-list {
+    max-height: var(--gtui-bases-height) !important;
+    overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin;
+  }
+  .gtui-bases-card.gtui-bases-closed .gtui-bases-list { display: none !important; }
+  #gtui-bases-current { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ui-dim); font-size: .8rem; }
+  .gtui-bases-card.gtui-bases-closed #gtui-bases-current { display: block; margin-left: auto; }
+  #gtui-bases-toggle { margin-left: auto; flex: 0 0 auto; background: transparent; border: 1px solid var(--ui-border); border-radius: 5px; color: var(--ui-dim); cursor: pointer; padding: 1px 8px; }
+  .gtui-bases-card.gtui-bases-closed #gtui-bases-toggle { margin-left: 0; }
+  #gtui-bases-toggle:hover { color: var(--ui-hi); border-color: var(--ui-accent); }
+  html body .gtui-restock-card > .card-header { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  html body .gtui-restock-card > .card-header:hover { background: var(--ui-panel-3) !important; }
+  .gtui-restock-card .gtui-restock-list { max-height: var(--gtui-restock-height) !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; }
+  .gtui-restock-card.gtui-restock-closed .gtui-restock-list { display: none !important; }
+  #gtui-restock-toggle { margin-left: auto; flex: 0 0 auto; background: transparent; border: 1px solid var(--ui-border); border-radius: 5px; color: var(--ui-dim); cursor: pointer; padding: 1px 8px; }
+  #gtui-restock-toggle:hover { color: var(--ui-hi); border-color: var(--ui-accent); }
+  .gtui-restock-time { margin-left: auto; flex: 0 0 auto; font-size: .8rem; color: var(--ui-dim); }
+  html body .gtui-fleet-card > .card-header { cursor: pointer !important; }
+  .gtui-fleet-card > .card-header .card-collapse-icon { display: none !important; }
+  .gtui-fleet-card .gtui-fleet-list {
+    max-height: var(--gtui-fleet-height) !important;
+    overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin;
+  }
+  .gtui-fleet-card.gtui-fleet-closed > .card-collapse { display: none !important; }
+  #gtui-fleet-count { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ui-dim); font-size: .8rem; }
+  .gtui-fleet-card.gtui-fleet-closed #gtui-fleet-count { display: inline; }
+  #gtui-fleet-toggle { flex: 0 0 auto; background: transparent; border: 1px solid var(--ui-border); border-radius: 5px; color: var(--ui-dim); cursor: pointer; padding: 1px 8px; }
+  #gtui-fleet-toggle:hover { color: var(--ui-hi); border-color: var(--ui-accent); }
   html body .grid-default { grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)) !important; gap: 8px !important; }
   html body .btn-building {
     background: var(--ui-panel-2) !important; border: 1px solid var(--ui-border) !important; color: var(--ui-fg) !important;
@@ -875,6 +934,49 @@
   html.gtui-embed body #app > main { margin: 0 !important; padding-top: 0 !important; height: 100vh !important; }
   html.gtui-embed body main > .row.h-100 { flex-direction: row; }
   html.gtui-embed body main > .row.h-100 > .col.min-w-0 { max-width: none; width: 100%; }
+  html.gtui-base-chat-embed body #app > main { padding: 0 !important; }
+  html.gtui-base-chat-embed body main > .row.h-100 { margin: 0 !important; }
+  html.gtui-base-chat-embed body main > .row.h-100 > .col.min-w-0 { padding: 0 !important; }
+
+  /* Base dashboard: General chat and the game's own compact Exchange trade card. */
+  #gtui-base-widgets { display: grid; grid-template-columns: minmax(0, var(--gtui-base-chat-share, 60fr)) minmax(0, var(--gtui-base-exchange-share, 40fr)); gap: 14px; margin: 14px 0 20px; }
+  #gtui-base-widgets.gtui-base-chat-only { grid-template-columns: minmax(0, var(--gtui-base-chat-share, 60fr)) minmax(0, var(--gtui-base-exchange-share, 40fr)); }
+  #gtui-base-widgets.gtui-base-exchange-only { grid-template-columns: minmax(0, var(--gtui-base-exchange-share, 40fr)) minmax(0, var(--gtui-base-chat-share, 60fr)); }
+  #gtui-base-widgets .gtui-base-widget { display: flex; flex-direction: column; min-width: 0; height: var(--gtui-base-height, clamp(420px, 55vh, 650px)); overflow: hidden; background: var(--ui-panel); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); }
+  #gtui-base-widgets .gtui-base-chat { border-color: var(--ui-border); }
+  #gtui-base-widgets .gtui-base-widget-head { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 6px 10px; background: var(--ui-panel-2); color: var(--ui-hi); border-bottom: 1px solid var(--ui-border); cursor: pointer; }
+  #gtui-base-widgets .gtui-base-widget-head a { margin-left: auto; color: var(--ui-dim); font-size: .8rem; white-space: nowrap; }
+  #gtui-base-widgets .gtui-base-widget-head select { flex: 1 1 auto; min-width: 0; max-width: 250px; background: var(--ui-bg); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 6px; padding: 3px 6px; }
+  #gtui-base-widgets .gtui-base-widget-head .gtui-base-collapse { margin-left: auto; flex: 0 0 auto; background: transparent; color: var(--ui-dim); border: 1px solid var(--ui-border); border-radius: 0; padding: 1px 8px; cursor: pointer; }
+  #gtui-base-widgets .gtui-base-widget-head a + .gtui-base-collapse { margin-left: 0; }
+  #gtui-base-widgets .gtui-base-closed { height: 44px !important; }
+  #gtui-base-widgets .gtui-base-closed iframe { display: none !important; }
+  #gtui-base-widgets .gtui-base-closed .gtui-base-widget-head { border-bottom: 0; }
+  #gtui-base-widgets iframe { display: block; flex: 1 1 0; min-height: 0; width: 100%; border: 0; background: var(--ui-bg); }
+  #gtui-base-widgets .gtui-base-chat-frames { position: relative; flex: 1 1 0; min-height: 0; }
+  #gtui-base-widgets .gtui-base-chat-frames iframe { position: absolute; inset: 0; height: 100%; visibility: hidden; pointer-events: none; }
+  #gtui-base-widgets .gtui-base-chat-frames iframe.gtui-active-chat { visibility: visible; pointer-events: auto; }
+  @media (max-width: 1100px) {
+    #gtui-base-widgets, #gtui-base-widgets.gtui-base-chat-only, #gtui-base-widgets.gtui-base-exchange-only { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  html.gtui-base-exchange body #app > nav.navbar, html.gtui-base-exchange #gtui-new,
+  html.gtui-base-exchange body main > .container-xxl > .card { display: none !important; }
+  html.gtui-base-exchange body #app > main { margin: 0 !important; padding: 0 !important; height: 100vh !important; overflow-y: auto; }
+  html.gtui-base-exchange body main > .container-xxl { padding: 0 !important; max-width: none !important; }
+  html.gtui-base-exchange body main > .container-xxl > .row.g-4 { display: block !important; margin: 0 !important; }
+  html.gtui-base-exchange body main > .container-xxl > .row.g-4 > :not(:has(#exchangeTradeMatCard)) { display: none !important; }
+  html.gtui-base-exchange body main > .container-xxl > .row.g-4 > :has(#exchangeTradeMatCard) { display: block !important; width: 100% !important; max-width: none !important; padding: 0 !important; position: static !important; }
+  html.gtui-base-exchange #exchangeTradeMatCard { min-height: 0 !important; margin: 0 !important; }
+  html.gtui-base-exchange #exchangeTradeMatCard .card-body { max-height: none !important; }
+  html.gtui-base-chat-embed body main > .row.h-100 > .col.min-w-0 > .card > .card-header { display: none !important; }
+  html.gtui-base-chat-embed body main .card,
+  html.gtui-base-chat-embed body main .card .card-header,
+  html.gtui-base-chat-embed body main .card .card-body,
+  html.gtui-base-chat-embed body main .card .card-footer,
+  html.gtui-base-chat-embed body main > .row.h-100 > .col.min-w-0 > .card .form-control,
+  html.gtui-base-chat-embed body main > .row.h-100 > .col.min-w-0 > .card .btn,
+  html.gtui-base-exchange #exchangeTradeMatCard { border-radius: 0 !important; }
 
   .gtui-tr.pend { opacity: .45; }
   .gtui-tr.pend::before { content: ''; }
@@ -1442,8 +1544,75 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false, baseCount: '10', fleetCount: '10', baseChatEnabled: true, baseExchangeEnabled: true, baseChatHeight: 'auto', baseExchangeHeight: 'auto', baseChatShare: '60' };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
+  const WALLPAPER_DB = 'gtui-assets';
+  let wallpaperUrl = null, wallpaperName = '', wallpaperGeneration = 0;
+  function wallpaperDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(WALLPAPER_DB, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('assets');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  async function wallpaperStore(mode, action) {
+    const db = await wallpaperDb();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction('assets', mode);
+        const request = action(tx.objectStore('assets'));
+        tx.oncomplete = () => resolve(request?.result);
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    } finally { db.close(); }
+  }
+  function showWallpaper(asset) {
+    if (wallpaperUrl) URL.revokeObjectURL(wallpaperUrl);
+    wallpaperUrl = asset?.blob ? URL.createObjectURL(asset.blob) : null;
+    wallpaperName = asset?.name || '';
+    if (wallpaperUrl) root.style.setProperty('--gtui-wallpaper', 'url("' + wallpaperUrl + '")');
+    else root.style.removeProperty('--gtui-wallpaper');
+    root.classList.toggle('gtui-wallpaper', !!wallpaperUrl);
+    if (setPanel?.classList.contains('open')) renderSettings();
+  }
+  function validateWallpaper(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), image = new Image();
+      image.onload = () => { URL.revokeObjectURL(url); resolve(); };
+      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image could not be opened')); };
+      image.src = url;
+    });
+  }
+  async function uploadWallpaper(file) {
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      window.alert('Choose a PNG, JPEG, or WebP image no larger than 10 MB.');
+      return;
+    }
+    const generation = ++wallpaperGeneration;
+    try {
+      await validateWallpaper(file);
+      if (generation !== wallpaperGeneration) return;
+      const asset = { blob: file, name: file.name };
+      await wallpaperStore('readwrite', (store) => store.put(asset, 'wallpaper'));
+      if (generation === wallpaperGeneration) showWallpaper(asset);
+    } catch (error) { window.alert('Could not save the background image in this browser.'); }
+  }
+  async function removeWallpaper() {
+    ++wallpaperGeneration;
+    try {
+      await wallpaperStore('readwrite', (store) => store.delete('wallpaper'));
+      showWallpaper(null);
+    } catch (error) { window.alert('Could not remove the saved background image.'); }
+  }
+  {
+    const generation = wallpaperGeneration;
+    wallpaperStore('readonly', (store) => store.get('wallpaper'))
+      .then((asset) => { if (generation === wallpaperGeneration && asset?.blob) showWallpaper(asset); })
+      .catch(() => { /* Browser storage unavailable: keep the selected theme background. */ });
+  }
   const hexRgb = (h) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h || ''); return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [124, 92, 255]; };
   const CUSTOM_KEYS = [['bg', 'Page background'], ['panel', 'Panels'], ['p2', 'Raised panels / hover'], ['border', 'Borders'], ['fg', 'Text'], ['dim', 'Dim text'], ['accent', 'Accent']];
   const HEX = /^#[0-9a-f]{6}$/i;
@@ -1487,6 +1656,488 @@
   }
   function saveCfg() { sset("gtui:cfg", cfg); applyCfg(); schedule(); }
 
+  const BASE_DETAILS_OPEN_KEY = 'gtui:base-details-open';
+  let baseDetailsOpen = sget(BASE_DETAILS_OPEN_KEY, true) !== false;
+  function syncBaseDetails() {
+    const header = [...document.querySelectorAll('main .card > .card-header')].find((candidate) => {
+      const tabs = [...candidate.querySelectorAll('.nav-link')]
+        .map((tab) => tab.textContent.trim().replace(/\s+/g, ' ').toLowerCase());
+      return ['base', 'buildings', 'workforce', 'production', 'warehouse'].every((name) => tabs.includes(name));
+    });
+    if (!header) return;
+    const card = header.parentElement;
+    if (!card.classList.contains('gtui-base-details-card')) card.classList.add('gtui-base-details-card');
+    if (card.classList.contains('gtui-base-details-closed') === baseDetailsOpen) card.classList.toggle('gtui-base-details-closed', !baseDetailsOpen);
+    let toggle = header.querySelector('#gtui-base-details-toggle');
+    if (!toggle) {
+      toggle = document.createElement('button');
+      toggle.id = 'gtui-base-details-toggle';
+      toggle.type = 'button';
+      toggle.addEventListener('click', () => {
+        baseDetailsOpen = !baseDetailsOpen;
+        sset(BASE_DETAILS_OPEN_KEY, baseDetailsOpen);
+        syncBaseDetails();
+        ensureBaseWidgets();
+      });
+      header.appendChild(toggle);
+    }
+    toggle.setAttribute('aria-expanded', String(baseDetailsOpen));
+    toggle.setAttribute('aria-label', baseDetailsOpen ? 'Collapse base details' : 'Expand base details');
+    const arrow = baseDetailsOpen ? '▴' : '▾';
+    if (toggle.textContent !== arrow) toggle.textContent = arrow;
+  }
+
+  const BASE_OPEN_KEY = 'gtui:bases-open';
+  let basesOpen = sget(BASE_OPEN_KEY, true) !== false;
+  const basesHeaders = new WeakSet();
+  function syncBases() {
+    const header = [...document.querySelectorAll('main .card-header')]
+      .find((h) => (h.closest('.gtui-bases-card') || [...h.childNodes].some((n) => n.nodeType === 3 && /^Bases$/i.test(n.textContent.trim())))
+        && h.closest('.card')?.querySelector('.list-group'));
+    if (!header) return;
+    const card = header.closest('.card');
+    const list = card.querySelector('.list-group');
+    const rows = [...list.children].filter((el) => el.matches('.list-group-item'));
+    if (!rows.length) return;
+
+    if (!basesHeaders.has(header)) {
+      basesHeaders.add(header);
+      header.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (button && button.id !== 'gtui-bases-toggle') return;
+        basesOpen = !basesOpen;
+        sset(BASE_OPEN_KEY, basesOpen);
+        syncBases();
+      });
+    }
+    if (!card.classList.contains('gtui-bases-card')) card.classList.add('gtui-bases-card');
+    if (!list.classList.contains('gtui-bases-list')) list.classList.add('gtui-bases-list');
+    if (list.id !== 'gtui-bases-list') list.id = 'gtui-bases-list';
+    let toggle = header.querySelector('#gtui-bases-toggle');
+    if (!toggle) {
+      toggle = document.createElement('button');
+      toggle.id = 'gtui-bases-toggle'; toggle.type = 'button';
+      toggle.setAttribute('aria-controls', list.id);
+      header.appendChild(toggle);
+    }
+    let current = header.querySelector('#gtui-bases-current');
+    if (!current) {
+      current = document.createElement('span');
+      current.id = 'gtui-bases-current';
+      header.insertBefore(current, toggle);
+    }
+
+    const selected = rows.find((row) => row.matches('.active, [aria-selected="true"]'));
+    const name = selected && ([...selected.children].map((el) => el.textContent.trim()).find(Boolean) || selected.textContent.trim()).replace(/\s+/g, ' ');
+    const label = name || 'No base selected';
+    if (current.textContent !== label) current.textContent = label;
+    if (current.title !== label) current.title = label;
+    if (card.classList.contains('gtui-bases-closed') === basesOpen) card.classList.toggle('gtui-bases-closed', !basesOpen);
+    const expanded = String(basesOpen);
+    if (toggle.getAttribute('aria-expanded') !== expanded) toggle.setAttribute('aria-expanded', expanded);
+    const action = basesOpen ? 'Collapse bases' : 'Expand bases';
+    if (toggle.getAttribute('aria-label') !== action) toggle.setAttribute('aria-label', action);
+    const arrow = basesOpen ? '▴' : '▾';
+    if (toggle.textContent !== arrow) toggle.textContent = arrow;
+
+    const count = [5, 10, 15, 20].includes(Number(cfg.baseCount)) ? Number(cfg.baseCount) : 10;
+    const last = rows[Math.min(count, rows.length) - 1];
+    const height = Math.ceil(last.getBoundingClientRect().bottom - rows[0].getBoundingClientRect().top) + 'px';
+    if (card.style.getPropertyValue('--gtui-bases-height') !== height) card.style.setProperty('--gtui-bases-height', height);
+  }
+
+  const RESTOCK_OPEN_KEY = 'gtui:restock-open';
+  let restockOpen = sget(RESTOCK_OPEN_KEY, true) !== false;
+  let restockGame = null, restockLoading = false, restockFailed = false;
+  const restockDeadlines = new Map();
+  function loadRestockGame() {
+    if (restockGame || restockLoading || restockFailed) return;
+    const link = document.querySelector('link[rel="modulepreload"][href*="/assets/main-"]');
+    if (!link) return;
+    restockLoading = true;
+    import(link.href).then((game) => { restockGame = game; schedule(); })
+      .catch(() => { restockLoading = false; restockFailed = true; schedule(); });
+  }
+  function restockTime(ms) {
+    if (ms === Infinity) return '∞';
+    if (ms <= 0) return '0m';
+    const minutes = Math.ceil(ms / 60000);
+    const days = Math.floor(minutes / 1440), hours = Math.floor(minutes % 1440 / 60), mins = minutes % 60;
+    return days ? days + 'd ' + hours + 'h' : hours ? hours + 'h ' + mins + 'm' : mins + 'm';
+  }
+  function syncRestock() {
+    const basesCard = document.querySelector('main .gtui-bases-card');
+    if (!basesCard) return;
+    const container = basesCard.parentElement;
+    if (!container) return;
+    let card = container.querySelector(':scope > .gtui-restock-card');
+    if (!card) {
+      card = document.createElement('div');
+      card.className = 'card border-0 mb-4 gtui-restock-card';
+      card.innerHTML = '<div class="card-header text-body-secondary">Restock<button id="gtui-restock-toggle" type="button" aria-controls="gtui-restock-list"></button></div><div id="gtui-restock-list" class="list-group list-group-flush gtui-restock-list"></div>';
+      basesCard.after(card);
+      card.querySelector('.card-header').addEventListener('click', () => {
+        restockOpen = !restockOpen;
+        sset(RESTOCK_OPEN_KEY, restockOpen);
+        schedule();
+      });
+    }
+    const list = card.querySelector('#gtui-restock-list');
+    const toggle = card.querySelector('#gtui-restock-toggle');
+    if (card.classList.contains('gtui-restock-closed') === restockOpen) card.classList.toggle('gtui-restock-closed', !restockOpen);
+    toggle.setAttribute('aria-expanded', String(restockOpen));
+    toggle.setAttribute('aria-label', restockOpen ? 'Collapse restock' : 'Expand restock');
+    const arrow = restockOpen ? '▴' : '▾';
+    if (toggle.textContent !== arrow) toggle.textContent = arrow;
+    loadRestockGame();
+    const game = restockGame;
+    if (!game || !game.b?.bases || typeof game.dD !== 'function' || !game.be || !game.bd || typeof game.c8 !== 'function') {
+      if (list.textContent !== 'Restock times unavailable') list.textContent = 'Restock times unavailable';
+      return;
+    }
+    const sourceRows = [...basesCard.querySelectorAll('.gtui-bases-list > .list-group-item')];
+    const sourceByName = new Map();
+    for (const row of sourceRows) {
+      const name = row.querySelector(':scope > span')?.textContent?.trim();
+      if (!name) continue;
+      if (!sourceByName.has(name)) sourceByName.set(name, []);
+      sourceByName.get(name).push(row);
+    }
+    const now = Date.now();
+    const ranked = [];
+    for (const base of [...game.b.bases].sort((a, b) => a.name.localeCompare(b.name))) {
+      const row = sourceByName.get(base.name)?.shift();
+      if (!row) continue;
+      const data = game.be.get(base.id), warehouse = game.bd.map.get(base.whId);
+      if (!data || !warehouse?.materialsReal) { ranked.push({ base, row, remaining: NaN }); continue; }
+      let production;
+      try { production = game.dD(base.id, false); }
+      catch (error) { ranked.push({ base, row, remaining: NaN }); continue; }
+      const { inputs, outputs } = production;
+      const rates = new Map();
+      for (const [id, amount] of inputs) rates.set(id, (rates.get(id) || 0) - amount);
+      for (const [id, amount] of outputs) rates.set(id, (rates.get(id) || 0) + amount);
+      for (const material of data.wf?.cM || []) if (material.rate > 0) rates.set(material.matId, (rates.get(material.matId) || 0) - material.rate);
+      let earliest = Infinity;
+      for (const [id, rate] of rates) {
+        if (rate >= -0.1) continue;
+        const stock = game.c8(warehouse, id);
+        const duration = stock > 0 ? stock / -rate * 86400000 : 0;
+        const key = base.id + ':' + id, previous = restockDeadlines.get(key);
+        const deadline = previous && previous.rate === rate && previous.stock === stock ? previous.deadline : now + duration;
+        restockDeadlines.set(key, { rate, stock, deadline });
+        earliest = Math.min(earliest, deadline);
+      }
+      ranked.push({ base, row, remaining: earliest === Infinity ? Infinity : earliest - now });
+    }
+    ranked.sort((a, b) => {
+      const left = Number.isNaN(a.remaining) ? Infinity : a.remaining;
+      const right = Number.isNaN(b.remaining) ? Infinity : b.remaining;
+      return left - right || a.base.name.localeCompare(b.base.name);
+    });
+    const signature = ranked.map(({ base, remaining, row }) => base.id + ':' + restockTime(remaining) + ':' + row.className + ':' + row.textContent).join('|');
+    if (list.dataset.signature !== signature) {
+      list.replaceChildren(...ranked.map(({ base, row, remaining }) => {
+        const copy = row.cloneNode(true);
+        copy.removeAttribute('id');
+        copy.addEventListener('click', () => row.click());
+        const time = document.createElement('small');
+        time.className = 'gtui-restock-time';
+        time.textContent = Number.isNaN(remaining) ? '—' : restockTime(remaining);
+        time.title = Number.isNaN(remaining) ? 'Restock time unavailable' : 'Shortest material reserve time';
+        copy.appendChild(time);
+        return copy;
+      }));
+      list.dataset.signature = signature;
+    }
+    const visible = [5, 10, 15, 20].includes(Number(cfg.baseCount)) ? Number(cfg.baseCount) : 10;
+    const rows = [...list.children];
+    if (rows.length) {
+      const last = rows[Math.min(visible, rows.length) - 1];
+      const height = Math.ceil(last.getBoundingClientRect().bottom - rows[0].getBoundingClientRect().top) + 'px';
+      if (card.style.getPropertyValue('--gtui-restock-height') !== height) card.style.setProperty('--gtui-restock-height', height);
+    }
+  }
+  setInterval(() => { if (document.querySelector('main .gtui-restock-card')) schedule(); }, 30000);
+
+  const BASE_MARKET_KEY = 'gtui:base-market-id';
+  let baseMarketId = Number(sget(BASE_MARKET_KEY, 1)) || 1;
+  let baseChatChannel = sget('gtui:base-chat-channel', 'general');
+  if (baseChatChannel !== 'general' && baseChatChannel !== 'guild' && !/^contact:5\d+$/.test(baseChatChannel)) baseChatChannel = 'general';
+  let baseChatContacts = [];
+  let baseChatContactObserver = null;
+  let baseChatOpen = sget('gtui:base-chat-open', true) !== false;
+  let baseExchangeOpen = sget('gtui:base-exchange-open', true) !== false;
+  function baseGuildChannel() {
+    const guildId = Number(restockGame?.b?.gId);
+    if (Number.isInteger(guildId)) return guildId > 0 ? String(2000000 + guildId) : null;
+    return Object.keys(knownChans()).find((id) => /^2\d{6}$/.test(id)) || null;
+  }
+  function syncBaseChatContacts(chat) {
+    const frame = chat.querySelector('iframe[data-channel-id="1000001"]');
+    if (!frame) return;
+    const doc = frame.contentDocument;
+    if (!doc) return;
+    const cards = [...doc.querySelectorAll('.card')].filter((card) =>
+      /^Contacts\b/i.test(card.querySelector(':scope > .card-header')?.textContent.trim() || ''));
+    if (!cards.length) return;
+    for (const card of cards) {
+      const showOlder = [...card.querySelectorAll('button')].find((button) => /^Show older\b/i.test(button.textContent.trim()));
+      if (showOlder) showOlder.click();
+    }
+    const seen = new Set();
+    const contacts = [];
+    for (const card of cards) {
+      for (const row of card.querySelectorAll('[data-channel-id]')) {
+        const id = row.dataset.channelId;
+        if (!/^5\d+$/.test(id) || seen.has(id)) continue;
+        seen.add(id);
+        contacts.push({ id, name: row.querySelector('.text-truncate')?.textContent.trim() || row.textContent.trim() });
+        if (contacts.length === 10) break;
+      }
+      if (contacts.length === 10) break;
+    }
+    const signature = JSON.stringify(contacts);
+    if (chat.dataset.contacts === signature) return;
+    chat.dataset.contacts = signature;
+    baseChatContacts = contacts;
+    schedule();
+  }
+  function watchBaseChatContacts(chat) {
+    baseChatContactObserver?.disconnect();
+    baseChatContactObserver = null;
+    const doc = chat.querySelector('iframe[data-channel-id="1000001"]')?.contentDocument;
+    if (!doc?.body) return;
+    syncBaseChatContacts(chat);
+    baseChatContactObserver = new MutationObserver(() => syncBaseChatContacts(chat));
+    baseChatContactObserver.observe(doc.body, { childList: true, subtree: true, characterData: true });
+  }
+  function syncBaseChatOptions(chat, guildChannel) {
+    const select = chat.querySelector('select');
+    const selectedContact = /^contact:(5\d+)$/.exec(baseChatChannel)?.[1];
+    const names = new Map(baseChatContacts.map(({ id, name }) => [id, name]));
+    if (selectedContact && !names.has(selectedContact)) names.set(selectedContact, [...select.options].find((option) => option.value === baseChatChannel)?.textContent || 'Contact ' + selectedContact);
+    const options = [['general', 'General'], ['guild', 'Guild'], ...baseChatContacts.map(({ id, name }) => ['contact:' + id, name])];
+    if (selectedContact && !baseChatContacts.some(({ id }) => id === selectedContact)) options.push(['contact:' + selectedContact, names.get(selectedContact)]);
+    const signature = JSON.stringify(options);
+    if (chat.dataset.options !== signature) {
+      select.replaceChildren(...options.map(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        return option;
+      }));
+      chat.dataset.options = signature;
+    }
+    select.querySelector('option[value="guild"]').disabled = !guildChannel;
+    const selected = baseChatChannel === 'guild' && !guildChannel ? 'general' : baseChatChannel;
+    if (select.value !== selected) select.value = selected;
+    return selected === 'guild' ? guildChannel : selected.startsWith('contact:') ? selected.slice(8) : '1000001';
+  }
+  function syncBaseChatFrames(chat, guildChannel, selectedChannelId) {
+    const container = chat.querySelector('.gtui-base-chat-frames');
+    const wanted = new Set(['1000001', ...baseChatContacts.map(({ id }) => id)]);
+    if (guildChannel) wanted.add(guildChannel);
+    wanted.add(selectedChannelId);
+    for (const frame of [...container.querySelectorAll('iframe[data-channel-id]')]) {
+      if (!wanted.has(frame.dataset.channelId)) frame.remove();
+    }
+    for (const id of wanted) {
+      let frame = [...container.querySelectorAll('iframe[data-channel-id]')].find((item) => item.dataset.channelId === id);
+      if (!frame) {
+        frame = document.createElement('iframe');
+        frame.name = 'gtui-base-chat';
+        frame.title = id === '1000001' ? 'General chat' : id === guildChannel ? 'Guild chat' : 'Contact chat';
+        frame.dataset.channelId = id;
+        frame.setAttribute('loading', 'eager');
+        if (id === '1000001') frame.addEventListener('load', () => watchBaseChatContacts(chat));
+        frame.src = '/comms/' + id;
+        container.appendChild(frame);
+      }
+      const active = id === selectedChannelId;
+      frame.classList.toggle('gtui-active-chat', active);
+      frame.setAttribute('aria-hidden', String(!active));
+    }
+  }
+  function syncBaseWidgetCollapse(widget, open, label) {
+    const closed = !open;
+    if (widget.classList.contains('gtui-base-closed') !== closed) widget.classList.toggle('gtui-base-closed', closed);
+    const button = widget.querySelector('.gtui-base-collapse');
+    button.setAttribute('aria-expanded', String(open));
+    button.setAttribute('aria-label', (open ? 'Collapse ' : 'Expand ') + label);
+    const arrow = open ? '▴' : '▾';
+    if (button.textContent !== arrow) button.textContent = arrow;
+  }
+  function ensureBaseWidgets() {
+    const bases = document.querySelector('main .gtui-bases-card');
+    const row = bases?.closest('main > .container-xxl > .row');
+    const content = row?.querySelector(':scope > .col:not(.col-md-2)');
+    if (!content) return;
+    let widgets = content.querySelector(':scope > #gtui-base-widgets');
+    const chatOn = cfg.baseChatEnabled !== false, exchangeOn = cfg.baseExchangeEnabled !== false;
+    if (!chatOn && !exchangeOn) {
+      baseChatContactObserver?.disconnect();
+      baseChatContactObserver = null;
+      widgets?.remove();
+      return;
+    }
+    if (!widgets) {
+      widgets = document.createElement('div');
+      widgets.id = 'gtui-base-widgets';
+      content.appendChild(widgets);
+    }
+    widgets.classList.toggle('gtui-base-chat-only', chatOn && !exchangeOn);
+    widgets.classList.toggle('gtui-base-exchange-only', exchangeOn && !chatOn);
+    const share = [40, 50, 60, 70].includes(Number(cfg.baseChatShare)) ? Number(cfg.baseChatShare) : 60;
+    widgets.style.setProperty('--gtui-base-chat-share', share + 'fr');
+    widgets.style.setProperty('--gtui-base-exchange-share', (100 - share) + 'fr');
+
+    let chat = widgets.querySelector(':scope > .gtui-base-chat');
+    if (!chatOn) {
+      baseChatContactObserver?.disconnect();
+      baseChatContactObserver = null;
+      chat?.remove();
+    }
+    else {
+      if (!chat) {
+        chat = document.createElement('section');
+        chat.className = 'gtui-base-widget gtui-base-chat';
+        chat.innerHTML = '<div class="gtui-base-widget-head"><select aria-label="Chat channel"><option value="general">General</option><option value="guild">Guild</option></select><button type="button" class="gtui-base-collapse"></button></div><div class="gtui-base-chat-frames"></div>';
+        chat.querySelector('.gtui-base-widget-head').addEventListener('click', (event) => {
+          if (event.target.closest('select')) return;
+          baseChatOpen = !baseChatOpen;
+          sset('gtui:base-chat-open', baseChatOpen);
+          syncBaseWidgetCollapse(chat, baseChatOpen, 'chat');
+        });
+        chat.querySelector('select').addEventListener('change', (event) => {
+          baseChatChannel = event.target.value;
+          sset('gtui:base-chat-channel', baseChatChannel);
+          schedule();
+        });
+        widgets.prepend(chat);
+      }
+      const height = ['auto', '400', '500', '600', '700', '800'].includes(String(cfg.baseChatHeight)) ? String(cfg.baseChatHeight) : 'auto';
+      const chatHeight = !baseDetailsOpen ? '800px' : height === 'auto' ? 'clamp(420px, 55vh, 650px)' : height + 'px';
+      if (chat.style.getPropertyValue('--gtui-base-height') !== chatHeight) chat.style.setProperty('--gtui-base-height', chatHeight);
+      syncBaseWidgetCollapse(chat, baseChatOpen, 'chat');
+      const guildChannel = baseGuildChannel();
+      const channelId = syncBaseChatOptions(chat, guildChannel);
+      syncBaseChatFrames(chat, guildChannel, channelId);
+    }
+
+    let exchange = widgets.querySelector(':scope > .gtui-base-exchange-widget');
+    if (!exchangeOn) { exchange?.remove(); return; }
+    loadPrices();
+    if (!exchange) {
+      exchange = document.createElement('section');
+      exchange.className = 'gtui-base-widget gtui-base-exchange-widget';
+      exchange.innerHTML = '<div class="gtui-base-widget-head"><select aria-label="Exchange item"></select><a href="/exchange/' + baseMarketId + '?tab=exchange">Open full</a><button type="button" class="gtui-base-collapse"></button></div><iframe name="gtui-base-exchange" src="/exchange/' + baseMarketId + '?tab=exchange" title="Exchange offers and buy controls"></iframe>';
+      exchange.querySelector('.gtui-base-widget-head').addEventListener('click', (event) => {
+        if (event.target.closest('select, a')) return;
+        baseExchangeOpen = !baseExchangeOpen;
+        sset('gtui:base-exchange-open', baseExchangeOpen);
+        syncBaseWidgetCollapse(exchange, baseExchangeOpen, 'Exchange');
+      });
+      exchange.querySelector('select').addEventListener('change', (event) => {
+        const id = Number(event.target.value);
+        if (!Number.isInteger(id) || id < 1) return;
+        baseMarketId = id;
+        sset(BASE_MARKET_KEY, id);
+        const path = '/exchange/' + id + '?tab=exchange';
+        exchange.dataset.marketId = String(id);
+        exchange.querySelector('iframe').src = path;
+        exchange.querySelector('a[href^="/exchange/"]').href = path;
+      });
+      exchange.dataset.marketId = String(baseMarketId);
+      widgets.appendChild(exchange);
+    }
+    const exchangeHeight = ['auto', '400', '500', '600', '700', '800'].includes(String(cfg.baseExchangeHeight)) ? String(cfg.baseExchangeHeight) : 'auto';
+    const displayedExchangeHeight = !baseDetailsOpen ? '800px' : exchangeHeight === 'auto' ? 'clamp(420px, 55vh, 650px)' : exchangeHeight + 'px';
+    if (exchange.style.getPropertyValue('--gtui-base-height') !== displayedExchangeHeight) exchange.style.setProperty('--gtui-base-height', displayedExchangeHeight);
+    syncBaseWidgetCollapse(exchange, baseExchangeOpen, 'Exchange');
+    const select = exchange.querySelector('select');
+    const materials = [...(mk.byId?.values() || [])].sort((a, b) => a.matName.localeCompare(b.matName));
+    const signature = materials.map((item) => item.matId + ':' + item.matName).join('|');
+    if (materials.length && select.dataset.signature !== signature) {
+      select.replaceChildren(...materials.map((item) => new Option(item.matName, String(item.matId))));
+      select.dataset.signature = signature;
+    }
+    if (materials.length) {
+      if (!materials.some((item) => item.matId === baseMarketId)) baseMarketId = materials.some((item) => item.matId === 1) ? 1 : materials[0].matId;
+      if (select.value !== String(baseMarketId)) select.value = String(baseMarketId);
+    } else if (!select.options.length) select.add(new Option('Loading items…', String(baseMarketId)));
+    if (exchange.dataset.marketId !== String(baseMarketId)) {
+      const path = '/exchange/' + baseMarketId + '?tab=exchange';
+      exchange.dataset.marketId = String(baseMarketId);
+      exchange.querySelector('iframe').src = path;
+      exchange.querySelector('a[href^="/exchange/"]').href = path;
+      sset(BASE_MARKET_KEY, baseMarketId);
+    }
+  }
+
+  const FLEET_OPEN_KEY = 'gtui:fleet-open';
+  let fleetOpen = sget(FLEET_OPEN_KEY, true) !== false;
+  let fleetNativeOpening = false;
+  const fleetHeaders = new WeakSet(), fleetNativeAttempts = new WeakSet();
+  function syncFleet() {
+    const header = [...document.querySelectorAll('main .col-md-2 .card-collapsible > .card-header')]
+      .find((h) => [...h.childNodes].some((n) => n.nodeType === 3 && /^Fleet$/i.test(n.textContent.trim())));
+    if (!header) return;
+    const card = header.parentElement;
+    if (!card.classList.contains('gtui-fleet-card')) card.classList.add('gtui-fleet-card');
+    if (!fleetHeaders.has(header)) {
+      fleetHeaders.add(header);
+      header.addEventListener('click', (e) => {
+        if (fleetNativeOpening || e.target.closest('.card-actions')) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        fleetOpen = !fleetOpen;
+        sset(FLEET_OPEN_KEY, fleetOpen);
+        syncFleet();
+      }, true);
+    }
+
+    let count = header.querySelector('#gtui-fleet-count');
+    if (!count) {
+      count = document.createElement('span'); count.id = 'gtui-fleet-count';
+      header.insertBefore(count, header.querySelector('.card-actions'));
+    }
+    let toggle = header.querySelector('#gtui-fleet-toggle');
+    if (!toggle) {
+      toggle = document.createElement('button'); toggle.id = 'gtui-fleet-toggle'; toggle.type = 'button';
+      header.insertBefore(toggle, header.querySelector('.card-collapse-icon'));
+    }
+    if (card.classList.contains('gtui-fleet-closed') === fleetOpen) card.classList.toggle('gtui-fleet-closed', !fleetOpen);
+    const expanded = String(fleetOpen);
+    if (toggle.getAttribute('aria-expanded') !== expanded) toggle.setAttribute('aria-expanded', expanded);
+    const action = fleetOpen ? 'Collapse fleet' : 'Expand fleet';
+    if (toggle.getAttribute('aria-label') !== action) toggle.setAttribute('aria-label', action);
+    const arrow = fleetOpen ? '▴' : '▾';
+    if (toggle.textContent !== arrow) toggle.textContent = arrow;
+
+    // On phones the game unmounts the ship list when its own Fleet setting is closed.
+    // Open that native container once; our separate toggle controls its visibility.
+    if (window.innerWidth < 576 && !card.classList.contains('show') && !fleetNativeAttempts.has(card)) {
+      fleetNativeAttempts.add(card);
+      fleetNativeOpening = true;
+      try { header.click(); } finally { fleetNativeOpening = false; }
+      schedule();
+    }
+    const list = card.querySelector(':scope > .card-collapse > ul.list-group');
+    if (!list) return;
+    if (!list.classList.contains('gtui-fleet-list')) list.classList.add('gtui-fleet-list');
+    if (list.id !== 'gtui-fleet-list') list.id = 'gtui-fleet-list';
+    if (toggle.getAttribute('aria-controls') !== list.id) toggle.setAttribute('aria-controls', list.id);
+    const rows = [...list.children].filter((el) => el.matches('li.list-group-item'));
+    const summary = rows.length + (rows.length === 1 ? ' ship' : ' ships');
+    if (count.textContent !== summary) count.textContent = summary;
+    if (!rows.length) return;
+    const visible = [5, 10, 15, 20].includes(Number(cfg.fleetCount)) ? Number(cfg.fleetCount) : 10;
+    const last = rows[Math.min(visible, rows.length) - 1];
+    const height = Math.ceil(last.getBoundingClientRect().bottom - rows[0].getBoundingClientRect().top) + 'px';
+    if (card.style.getPropertyValue('--gtui-fleet-height') !== height) card.style.setProperty('--gtui-fleet-height', height);
+  }
+
   let setPanel = null;
   function renderSettings() {
     const t = themeOf();
@@ -1505,6 +2156,9 @@
           '<div class="blist">' + ((cfg.saved || []).length ? cfg.saved.map((x, i) => '<span class="bchip"><button type="button" data-a="c-load" data-i="' + i + '" style="color:var(--ui-fg)" title="Use this theme">' + esc(x.name) + '</button><button type="button" data-a="c-del" data-i="' + i + '" title="Delete">✕</button></span>').join('') : '<span class="note" style="margin:0">No saved themes yet.</span>') + '</div>' +
           '<div class="crow"><button type="button" class="sm" data-a="c-export">Export all to file</button><button type="button" class="sm" data-a="c-importfile">Import file</button><input type="file" accept=".json,application/json" data-f="themes" hidden></div></div>'
         : '<label class="rw"><span>Accent colour</span><span><input type="color" data-a="accent" value="' + (cfg.accent || t.accent) + '"> <button type="button" class="sm" data-a="accent-reset">reset</button></span></label>') +
+      '<div class="sec">Background image</div>' +
+      '<div class="crow"><button type="button" class="sm" data-a="wallpaper-choose">Choose image</button><button type="button" class="sm" data-a="wallpaper-remove"' + (wallpaperName ? '' : ' disabled') + '>Remove image</button><input type="file" accept="image/png,image/jpeg,image/webp" data-f="wallpaper" hidden></div>' +
+      '<div class="note">' + (wallpaperName ? esc(wallpaperName) : 'No image selected') + ' · Stored only in this browser. Panels keep their theme colours.</div>' +
       '<div class="sec">Hide images</div>' +
       chk('hideAvatars', 'Chat avatars') + chk('hideLogos', 'Company logos (lists, offers, profiles)') + chk('hidePortraits', 'Player portraits') +
       '<div class="sec">Sidebar layout</div>' +
@@ -1545,6 +2199,18 @@
       '<label class="rw"><span>Keep chat history light</span><select data-k="histN">' +
       [['0', 'Off (show everything)'], ['100', 'Newest 100, load more on scroll'], ['200', 'Newest 200, load more on scroll'], ['400', 'Newest 400, load more on scroll']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.histN) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       '<div class="sec">Interface</div>' +
+      '<label class="rw"><span>Visible bases</span><select data-k="baseCount">' +
+      ['5', '10', '15', '20'].map((v) => '<option value="' + v + '"' + (String(cfg.baseCount) === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>' +
+      '<label class="rw"><span>Visible ships</span><select data-k="fleetCount">' +
+      ['5', '10', '15', '20'].map((v) => '<option value="' + v + '"' + (String(cfg.fleetCount) === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>' +
+      '<div class="sec">Base panels</div>' +
+      chk('baseChatEnabled', 'Show General chat') + chk('baseExchangeEnabled', 'Show Exchange') +
+      '<label class="rw"><span>Chat height</span><select data-k="baseChatHeight">' +
+      [['auto', 'Auto'], ['400', '400 px'], ['500', '500 px'], ['600', '600 px'], ['700', '700 px'], ['800', '800 px']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseChatHeight) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      '<label class="rw"><span>Exchange height</span><select data-k="baseExchangeHeight">' +
+      [['auto', 'Auto'], ['400', '400 px'], ['500', '500 px'], ['600', '600 px'], ['700', '700 px'], ['800', '800 px']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseExchangeHeight) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      '<label class="rw"><span>Chat / Exchange width</span><select data-k="baseChatShare">' +
+      [['40', '40 / 60'], ['50', '50 / 50'], ['60', '60 / 40'], ['70', '70 / 30']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseChatShare) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       '<label class="rw"><span>Row density</span><select data-k="density">' +
       [['compact', 'Compact'], ['normal', 'Normal'], ['roomy', 'Roomy']].map(([v, l]) => '<option value="' + v + '"' + (cfg.density === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       chk('numKeys', 'Number keys 1-9 jump between screens') +
@@ -1573,6 +2239,8 @@
       const a = e.target.closest('[data-a]');
       if (!a) return;
       if (a.dataset.a === 'close') closeSettings();
+      else if (a.dataset.a === 'wallpaper-choose') setPanel.querySelector('[data-f="wallpaper"]')?.click();
+      else if (a.dataset.a === 'wallpaper-remove') removeWallpaper();
       else if (a.dataset.a === 'c-save') {
         const name = (window.prompt('Name for this theme:') || '').trim().slice(0, 40);
         if (name) { cfg.saved = (cfg.saved || []).filter((x) => x.name.toLowerCase() !== name.toLowerCase()); const cur = Object.assign({}, themeOf(), cfg.custom || {}); const c = {}; CUSTOM_KEYS.forEach(([k]) => { c[k] = cur[k]; }); cfg.saved.push({ name, c }); saveCfg(); renderSettings(); }
@@ -1609,7 +2277,7 @@
       else if (a.dataset.a === 'upd-check') checkUpdate(setPanel.querySelector('.ust'));
       else if (a.dataset.a === 'upd-open') window.open(UPDATE_URL, '_blank', 'noopener');
       else if (a.dataset.a === 'accent-reset') { cfg.accent = ''; saveCfg(); renderSettings(); }
-      else if (a.dataset.a === 'reset-all') { cfg = Object.assign({}, CFG_DEFAULT); saveCfg(); renderSettings(); }
+      else if (a.dataset.a === 'reset-all') { cfg = Object.assign({}, CFG_DEFAULT); saveCfg(); removeWallpaper(); renderSettings(); }
     });
     setPanel.addEventListener('input', (e) => {
       const el = e.target;
@@ -1622,6 +2290,11 @@
     });
     setPanel.addEventListener('change', (e) => {
       const f = e.target;
+      if (f.dataset && f.dataset.f === 'wallpaper') {
+        if (f.files?.[0]) uploadWallpaper(f.files[0]);
+        f.value = '';
+        return;
+      }
       if (f.dataset && f.dataset.f === 'settings' && f.files && f.files[0]) {
         f.files[0].text().then((txt) => {
           const o = JSON.parse(txt);
@@ -2104,6 +2777,7 @@
 
   /* ================= QOL pack: alerts, quick buy, wishlist prices, mentions, chat tools, profit calculator ================= */
   function toast(msg, ms) {
+    if (SILENT_FRAME) return;
     let box = document.getElementById('gtui-toasts');
     if (!box) { box = document.createElement('div'); box.id = 'gtui-toasts'; document.body.appendChild(box); }
     const t = document.createElement('div'); t.className = 't'; t.textContent = msg; box.appendChild(t);
@@ -2117,7 +2791,7 @@
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && unread) { unread = 0; bumpTitle(0); } });
   function beep() {
-    if (!cfg.sound) return;
+    if (SILENT_FRAME || !cfg.sound) return;
     try {
       const C = window.AudioContext || window.webkitAudioContext, a = new C(), o = a.createOscillator(), g = a.createGain();
       o.connect(g); g.connect(a.destination); o.frequency.value = 880;
@@ -2126,6 +2800,7 @@
     } catch (e) { /* no audio */ }
   }
   function desktopNote(msg) {
+    if (SILENT_FRAME) return;
     try { if ('Notification' in window && Notification.permission === 'granted' && document.hidden) new Notification('Galactic Tycoons', { body: msg }); } catch (e) { /* ignore */ }
   }
 
@@ -2161,7 +2836,7 @@
     if (dirty) saveCfg();
   }
   async function alertTick() {
-    if (EMBED || !(cfg.alerts || []).length) return;
+    if (SILENT_FRAME || !(cfg.alerts || []).length) return;
     await loadPrices();
     checkAlerts();
   }
@@ -2247,7 +2922,7 @@
       if (hit && isNew) { fresh++; if (!firstFresh) firstFresh = (hb ? hb.textContent.trim() + ': ' : '') + c.textContent.trim().slice(0, 80); }
     });
     if (!mentionInit) { mentionInit = true; return; }
-    if (fresh && news <= 6) {   // a big batch means we just opened a channel, not new messages
+    if (!SILENT_FRAME && fresh && news <= 6) {   // a big batch means we just opened a channel, not new messages
       beep();
       if (document.hidden) { unread += fresh; bumpTitle(unread); desktopNote(firstFresh); }
     }
@@ -2401,8 +3076,11 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.57';
+  const VERSION = '0.9.60';
   const CHANGELOG = {
+    '0.9.60': ['Click anywhere on the Bases header to collapse or expand the list'],
+    '0.9.59': ['Fleet list can be collapsed and scrolled; choose how many ships are visible in Settings'],
+    '0.9.58': ['Bases list can be collapsed and scrolled; choose how many bases are visible in Settings'],
     '0.9.57': ['Stacked sidebar: every box (stats, bell, profile, Settings, Collapse) is now the same size and stays inside the sidebar'],
     '0.9.56': ['New themes: Nanoweave Shielding (Dark and Light), blue/green with the Material look, dotted background and drifting shields and droplets'],
     '0.9.55': ['Chat now uses the full window width (removed the old 1400px cap on very wide screens)'],
@@ -2452,8 +3130,12 @@
   window.addEventListener('resize', fitNewBar);
 
   /* ---------- Multi-chat: several channels side by side (each pane is the game's own /comms/<id> page in a frame) ---------- */
-  const EMBED = window.name === 'gtui-embed';
+  const BASE_CHAT_EMBED = window.name === 'gtui-base-chat';
+  const EMBED = window.name === 'gtui-embed' || BASE_CHAT_EMBED;
+  const BASE_EXCHANGE_EMBED = window.name === 'gtui-base-exchange';
   if (EMBED) root.classList.add('gtui-embed');
+  if (BASE_CHAT_EMBED) root.classList.add('gtui-base-chat-embed');
+  if (BASE_EXCHANGE_EMBED) root.classList.add('gtui-base-exchange');
   const KNOWN0 = { 1000001: 'General', 1000002: 'Trade', 1000003: 'Help', 1000051: '中文' };
   function learnChannels() {
     const items = document.querySelectorAll('main .row.h-100 > .col-3 .list-group-item[data-channel-id]');
@@ -2548,7 +3230,7 @@
   }
   // once a day, quietly: tell the user if a newer version exists
   setTimeout(async () => {
-    if (EMBED) return;
+    if (SILENT_FRAME) return;
     const last = sget('gtui:upd', null);
     if (last && Date.now() - last.at < 86400000) { if (vnum(last.v) > vnum(VERSION) && !sget('gtui:updtold:' + last.v, false)) { sset('gtui:updtold:' + last.v, true); toast('Sleek UI v' + last.v + ' is available - open Settings and press "Check for updates".', 12000); } return; }
     try { const v = await fetchLatest(); sset('gtui:upd', { at: Date.now(), v }); if (vnum(v) > vnum(VERSION)) { sset('gtui:updtold:' + v, true); toast('Sleek UI v' + v + ' is available - open Settings and press "Check for updates".', 12000); } } catch (e) { /* offline or blocked: stay quiet */ }
@@ -2556,6 +3238,7 @@
 
   function syncAll() {
     if (EMBED) { syncBlocked(); syncTranslate(); syncOutbound(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory(); return; }
+    if (BASE_EXCHANGE_EMBED) return;
     learnChannels(); ensureMulti();
     syncNewBar();
     ensureProfitNav(); syncQuick(); syncWishPrices(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory();
@@ -2564,7 +3247,7 @@
     ensureKeys();
     syncCompactBits();
     syncBlocked();
-    ensureLinks(); ensureNotes(); ensureToggle(); labelNav(); syncCats(); syncXchToggle();
+    ensureLinks(); ensureNotes(); ensureToggle(); labelNav(); syncBases(); syncRestock(); syncFleet(); syncBaseDetails(); ensureBaseWidgets(); syncCats(); syncXchToggle();
     syncMarket(); syncInfo(); syncResearch(); syncTranslate(); syncOutbound();
     if (document.querySelector('.modal.show')) parseProfile();
     renderStats();
