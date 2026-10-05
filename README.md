@@ -16,6 +16,8 @@ If you previously pasted the script in by hand, delete that old copy first so tw
 
 Install **[gt-pasteimg.user.js](https://raw.githubusercontent.com/Lloir/gt-tampermonkey/main/gt-pasteimg.user.js)** in Tampermonkey alongside Sleek UI to show Pasteimg image-page links inline in Comms, including multi-chat. The original message stays visible, and clicking a preview opens its Pasteimg page. Tampermonkey will request permission to read `pasteimg.com` pages so the script can find each image URL. No change to `gt-ui.user.js` is required. Previews load automatically for any Pasteimg link posted in chat, so Pasteimg can see your IP address and you will see whatever image is linked; skip this script if you don't want that.
 
+- **Base page extras** (collapsible Bases/Fleet lists, Restock times, chat and Exchange panels under the bases) are all off by default; tick them under Settings → Base page.
+
 ## Notes
 
 - Chat translation is off by default. When enabled it sends message text to Google Translate (Chrome 138+ uses on-device translation where available).

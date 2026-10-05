@@ -1544,7 +1544,7 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false, baseCount: '10', fleetCount: '10', baseChatEnabled: true, baseExchangeEnabled: true, baseChatHeight: 'auto', baseExchangeHeight: 'auto', baseChatShare: '60' };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false, baseLists: false, baseRestock: false, baseCount: '10', fleetCount: '10', baseChatEnabled: false, baseExchangeEnabled: false, baseChatHeight: 'auto', baseExchangeHeight: 'auto', baseChatShare: '60' };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
   const WALLPAPER_DB = 'gtui-assets';
   let wallpaperUrl = null, wallpaperName = '', wallpaperGeneration = 0;
@@ -1656,6 +1656,21 @@
   }
   function saveCfg() { sset("gtui:cfg", cfg); applyCfg(); schedule(); }
 
+  /* The Base page extras are all opt-in (Settings -> Base page). Nothing below touches the page unless its box is ticked,
+     and un-ticking a box removes what it added. */
+  function findBasesCard() {
+    const header = [...document.querySelectorAll('main .card-header')]
+      .find((h) => [...h.childNodes].some((n) => n.nodeType === 3 && /^Bases$/i.test(n.textContent.trim())) && h.closest('.card')?.querySelector('.list-group'));
+    return header ? header.closest('.card') : null;
+  }
+  function baseListsOff() {
+    document.querySelectorAll('#gtui-base-details-toggle, #gtui-bases-toggle, #gtui-bases-current, #gtui-fleet-toggle, #gtui-fleet-count').forEach((n) => n.remove());
+    ['gtui-base-details-card', 'gtui-base-details-closed', 'gtui-bases-card', 'gtui-bases-closed', 'gtui-fleet-card', 'gtui-fleet-closed'].forEach((c) =>
+      document.querySelectorAll('.' + c).forEach((n) => { n.classList.remove(c); n.style.removeProperty('--gtui-bases-height'); n.style.removeProperty('--gtui-fleet-height'); }));
+    document.querySelectorAll('.gtui-bases-list, .gtui-fleet-list').forEach((n) => { n.classList.remove('gtui-bases-list', 'gtui-fleet-list'); if (/^gtui-(bases|fleet)-list$/.test(n.id)) n.removeAttribute('id'); });
+  }
+  function baseRestockOff() { document.querySelectorAll('.gtui-restock-card').forEach((n) => n.remove()); }
+
   const BASE_DETAILS_OPEN_KEY = 'gtui:base-details-open';
   let baseDetailsOpen = sget(BASE_DETAILS_OPEN_KEY, true) !== false;
   function syncBaseDetails() {
@@ -1703,6 +1718,7 @@
     if (!basesHeaders.has(header)) {
       basesHeaders.add(header);
       header.addEventListener('click', (e) => {
+        if (!cfg.baseLists) return;
         const button = e.target.closest('button');
         if (button && button.id !== 'gtui-bases-toggle') return;
         basesOpen = !basesOpen;
@@ -1766,7 +1782,7 @@
     return days ? days + 'd ' + hours + 'h' : hours ? hours + 'h ' + mins + 'm' : mins + 'm';
   }
   function syncRestock() {
-    const basesCard = document.querySelector('main .gtui-bases-card');
+    const basesCard = findBasesCard();
     if (!basesCard) return;
     const container = basesCard.parentElement;
     if (!container) return;
@@ -1792,10 +1808,10 @@
     loadRestockGame();
     const game = restockGame;
     if (!game || !game.b?.bases || typeof game.dD !== 'function' || !game.be || !game.bd || typeof game.c8 !== 'function') {
-      if (list.textContent !== 'Restock times unavailable') list.textContent = 'Restock times unavailable';
+      if (list.textContent !== 'Restock times unavailable') { list.textContent = 'Restock times unavailable'; list.style.padding = '8px 16px'; list.style.color = 'var(--ui-dim)'; }
       return;
     }
-    const sourceRows = [...basesCard.querySelectorAll('.gtui-bases-list > .list-group-item')];
+    const sourceRows = [...basesCard.querySelectorAll('.list-group > .list-group-item')];
     const sourceByName = new Map();
     for (const row of sourceRows) {
       const name = row.querySelector(':scope > span')?.textContent?.trim();
@@ -1858,7 +1874,7 @@
       if (card.style.getPropertyValue('--gtui-restock-height') !== height) card.style.setProperty('--gtui-restock-height', height);
     }
   }
-  setInterval(() => { if (document.querySelector('main .gtui-restock-card')) schedule(); }, 30000);
+  setInterval(() => { if (cfg.baseRestock && document.querySelector('main .gtui-restock-card')) schedule(); }, 30000);
 
   const BASE_MARKET_KEY = 'gtui:base-market-id';
   let baseMarketId = Number(sget(BASE_MARKET_KEY, 1)) || 1;
@@ -1968,7 +1984,7 @@
     if (button.textContent !== arrow) button.textContent = arrow;
   }
   function ensureBaseWidgets() {
-    const bases = document.querySelector('main .gtui-bases-card');
+    const bases = findBasesCard();
     const row = bases?.closest('main > .container-xxl > .row');
     const content = row?.querySelector(':scope > .col:not(.col-md-2)');
     if (!content) return;
@@ -2016,7 +2032,7 @@
         widgets.prepend(chat);
       }
       const height = ['auto', '400', '500', '600', '700', '800'].includes(String(cfg.baseChatHeight)) ? String(cfg.baseChatHeight) : 'auto';
-      const chatHeight = !baseDetailsOpen ? '800px' : height === 'auto' ? 'clamp(420px, 55vh, 650px)' : height + 'px';
+      const chatHeight = (cfg.baseLists && !baseDetailsOpen) ? '800px' : height === 'auto' ? 'clamp(420px, 55vh, 650px)' : height + 'px';
       if (chat.style.getPropertyValue('--gtui-base-height') !== chatHeight) chat.style.setProperty('--gtui-base-height', chatHeight);
       syncBaseWidgetCollapse(chat, baseChatOpen, 'chat');
       const guildChannel = baseGuildChannel();
@@ -2051,7 +2067,7 @@
       widgets.appendChild(exchange);
     }
     const exchangeHeight = ['auto', '400', '500', '600', '700', '800'].includes(String(cfg.baseExchangeHeight)) ? String(cfg.baseExchangeHeight) : 'auto';
-    const displayedExchangeHeight = !baseDetailsOpen ? '800px' : exchangeHeight === 'auto' ? 'clamp(420px, 55vh, 650px)' : exchangeHeight + 'px';
+    const displayedExchangeHeight = (cfg.baseLists && !baseDetailsOpen) ? '800px' : exchangeHeight === 'auto' ? 'clamp(420px, 55vh, 650px)' : exchangeHeight + 'px';
     if (exchange.style.getPropertyValue('--gtui-base-height') !== displayedExchangeHeight) exchange.style.setProperty('--gtui-base-height', displayedExchangeHeight);
     syncBaseWidgetCollapse(exchange, baseExchangeOpen, 'Exchange');
     const select = exchange.querySelector('select');
@@ -2087,7 +2103,7 @@
     if (!fleetHeaders.has(header)) {
       fleetHeaders.add(header);
       header.addEventListener('click', (e) => {
-        if (fleetNativeOpening || e.target.closest('.card-actions')) return;
+        if (!cfg.baseLists || fleetNativeOpening || e.target.closest('.card-actions')) return;
         e.preventDefault();
         e.stopImmediatePropagation();
         fleetOpen = !fleetOpen;
@@ -2197,19 +2213,21 @@
       '<div class="note" style="margin-top:0">Your company name is always included. Mentions get highlighted, and show in the tab title when the tab is in the background.</div>' +
       '<label class="rw"><span>Keep chat history light</span><select data-k="histN">' +
       [['0', 'Off (show everything)'], ['100', 'Newest 100, load more on scroll'], ['200', 'Newest 200, load more on scroll'], ['400', 'Newest 400, load more on scroll']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.histN) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      '<div class="sec">Base page (all optional, off by default)</div>' +
+      chk('baseLists', 'Collapsible, scrollable Bases and Fleet lists, and collapsible base details') +
+      (cfg.baseLists ? ('<label class="rw"><span>Visible bases</span><select data-k="baseCount">' +
+      ['5', '10', '15', '20'].map((v) => '<option value="' + v + '"' + (String(cfg.baseCount) === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>') : '') +
+      (cfg.baseLists ? ('<label class="rw"><span>Visible ships</span><select data-k="fleetCount">' +
+      ['5', '10', '15', '20'].map((v) => '<option value="' + v + '"' + (String(cfg.fleetCount) === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>') : '') +
+      chk('baseRestock', "Restock times list (reads the game's own data, may stop working after a game update)") +
+      chk('baseChatEnabled', 'Chat panel under the bases (General, Guild, contacts)') + chk('baseExchangeEnabled', 'Exchange panel under the bases') +
+      (cfg.baseChatEnabled ? ('<label class="rw"><span>Chat height</span><select data-k="baseChatHeight">' +
+      [['auto', 'Auto'], ['400', '400 px'], ['500', '500 px'], ['600', '600 px'], ['700', '700 px'], ['800', '800 px']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseChatHeight) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>') : '') +
+      (cfg.baseExchangeEnabled ? ('<label class="rw"><span>Exchange height</span><select data-k="baseExchangeHeight">' +
+      [['auto', 'Auto'], ['400', '400 px'], ['500', '500 px'], ['600', '600 px'], ['700', '700 px'], ['800', '800 px']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseExchangeHeight) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>') : '') +
+      (cfg.baseChatEnabled && cfg.baseExchangeEnabled ? ('<label class="rw"><span>Chat / Exchange width</span><select data-k="baseChatShare">' +
+      [['40', '40 / 60'], ['50', '50 / 50'], ['60', '60 / 40'], ['70', '70 / 30']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseChatShare) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>') : '') +
       '<div class="sec">Interface</div>' +
-      '<label class="rw"><span>Visible bases</span><select data-k="baseCount">' +
-      ['5', '10', '15', '20'].map((v) => '<option value="' + v + '"' + (String(cfg.baseCount) === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>' +
-      '<label class="rw"><span>Visible ships</span><select data-k="fleetCount">' +
-      ['5', '10', '15', '20'].map((v) => '<option value="' + v + '"' + (String(cfg.fleetCount) === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></label>' +
-      '<div class="sec">Base panels</div>' +
-      chk('baseChatEnabled', 'Show General chat') + chk('baseExchangeEnabled', 'Show Exchange') +
-      '<label class="rw"><span>Chat height</span><select data-k="baseChatHeight">' +
-      [['auto', 'Auto'], ['400', '400 px'], ['500', '500 px'], ['600', '600 px'], ['700', '700 px'], ['800', '800 px']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseChatHeight) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
-      '<label class="rw"><span>Exchange height</span><select data-k="baseExchangeHeight">' +
-      [['auto', 'Auto'], ['400', '400 px'], ['500', '500 px'], ['600', '600 px'], ['700', '700 px'], ['800', '800 px']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseExchangeHeight) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
-      '<label class="rw"><span>Chat / Exchange width</span><select data-k="baseChatShare">' +
-      [['40', '40 / 60'], ['50', '50 / 50'], ['60', '60 / 40'], ['70', '70 / 30']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.baseChatShare) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       '<label class="rw"><span>Row density</span><select data-k="density">' +
       [['compact', 'Compact'], ['normal', 'Normal'], ['roomy', 'Roomy']].map(([v, l]) => '<option value="' + v + '"' + (cfg.density === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
       chk('numKeys', 'Number keys 1-9 jump between screens') +
@@ -2285,6 +2303,7 @@
       if (el.dataset.k) {
         cfg[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value;
         saveCfg();
+        if (['baseLists', 'baseChatEnabled', 'baseExchangeEnabled'].includes(el.dataset.k)) { const top = setPanel.scrollTop; renderSettings(); setPanel.scrollTop = top; }   // show/hide the related options
       }
     });
     setPanel.addEventListener('change', (e) => {
@@ -3077,7 +3096,7 @@
   /* ---------- "What's new" bar ---------- */
   const VERSION = '0.9.61';
   const CHANGELOG = {
-    '0.9.61': ['Base dashboard (thanks YeoZn): General chat and Exchange panels, Restock times, collapsible Bases/Fleet lists, Settings → Background image; Pasteimg previews are a separate optional script'],
+    '0.9.61': ['Base page extras (thanks YeoZn), all optional and off by default in Settings → Base page: collapsible Bases/Fleet lists, Restock times, chat and Exchange panels. Also Settings → Background image. Pasteimg previews are a separate optional script'],
     '0.9.60': ['Click anywhere on the Bases header to collapse or expand the list'],
     '0.9.59': ['Fleet list can be collapsed and scrolled; choose how many ships are visible in Settings'],
     '0.9.58': ['Bases list can be collapsed and scrolled; choose how many bases are visible in Settings'],
@@ -3247,7 +3266,9 @@
     ensureKeys();
     syncCompactBits();
     syncBlocked();
-    ensureLinks(); ensureNotes(); ensureToggle(); labelNav(); syncBases(); syncRestock(); syncFleet(); syncBaseDetails(); ensureBaseWidgets(); syncCats(); syncXchToggle();
+    ensureLinks(); ensureNotes(); ensureToggle(); labelNav(); if (cfg.baseLists) { syncBases(); syncFleet(); syncBaseDetails(); } else baseListsOff();
+    if (cfg.baseRestock) syncRestock(); else baseRestockOff();
+    ensureBaseWidgets(); syncCats(); syncXchToggle();
     syncMarket(); syncInfo(); syncResearch(); syncTranslate(); syncOutbound();
     if (document.querySelector('.modal.show')) parseProfile();
     renderStats();
