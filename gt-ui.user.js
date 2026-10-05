@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Galactic Tycoons – Sleek UI
+// @name         Galactic Tycoons Reborn
 // @namespace    https://github.com/Lloir/ef
 // @version      0.9.66
-// @description  Sidebar navigation, EVE-style market layout, command palette, responsive layout for Galactic Tycoons
+// @description  Overhaul of Base tab
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
 // @exclude      https://api.*
