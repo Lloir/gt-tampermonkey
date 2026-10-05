@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Galactic Tycoons Reborn
+// @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.66
-// @description  Overhaul of Base tab
+// @version      0.9.61
+// @description  Sidebar navigation, EVE-style market layout, command palette, Base dashboard, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
 // @exclude      https://api.*
@@ -1936,9 +1936,8 @@
   }
   function syncBaseChatFrames(chat, guildChannel, selectedChannelId) {
     const container = chat.querySelector('.gtui-base-chat-frames');
-    const wanted = new Set(['1000001', ...baseChatContacts.map(({ id }) => id)]);
-    if (guildChannel) wanted.add(guildChannel);
-    wanted.add(selectedChannelId);
+    // General stays loaded (it supplies the contact list); any other channel loads only while selected, to spare the game's connection limit
+    const wanted = new Set(['1000001', selectedChannelId]);
     for (const frame of [...container.querySelectorAll('iframe[data-channel-id]')]) {
       if (!wanted.has(frame.dataset.channelId)) frame.remove();
     }
@@ -3076,8 +3075,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.60';
+  const VERSION = '0.9.61';
   const CHANGELOG = {
+    '0.9.61': ['Base dashboard (thanks YeoZn): General chat and Exchange panels, Restock times, collapsible Bases/Fleet lists, Settings → Background image; Pasteimg previews are a separate optional script'],
     '0.9.60': ['Click anywhere on the Bases header to collapse or expand the list'],
     '0.9.59': ['Fleet list can be collapsed and scrolled; choose how many ships are visible in Settings'],
     '0.9.58': ['Bases list can be collapsed and scrolled; choose how many bases are visible in Settings'],
