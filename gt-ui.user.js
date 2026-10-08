@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.62
+// @version      0.9.63
 // @description  Sidebar navigation, EVE-style market layout, command palette, Base dashboard, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -829,26 +829,6 @@
   @keyframes gtui-chix-fall { from { transform: translateY(-5vh) rotate(-12deg); } 50% { transform: translateY(55vh) rotate(14deg); } to { transform: translateY(110vh) rotate(-8deg); } }
   @media (prefers-reduced-motion: reduce) { #gtui-chix { display: none !important; } }
 
-  /* wishlist: Buy all */
-  #gtui-buyall { flex: 0 0 auto; background: var(--ui-accent); color: var(--ui-accent-fg); border: 0; padding: 0 14px; font-weight: 700; cursor: pointer; border-radius: 0 6px 6px 0; }
-  #gtui-buyall:hover { filter: brightness(1.12); }
-  #gtui-buy { position: fixed; inset: 0; z-index: 2100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.62); }
-  #gtui-buy.open { display: flex; }
-  #gtui-buy .box { width: min(520px, 94vw); max-height: 86vh; display: flex; flex-direction: column; background: var(--ui-panel); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.7); padding: 18px 20px; }
-  #gtui-buy h3 { margin: 0 0 4px; font-size: 1.15rem; color: var(--ui-hi); }
-  #gtui-buy .sub { color: var(--ui-dim); font-size: .82rem; margin-bottom: 10px; }
-  #gtui-buy .lst { overflow-y: auto; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-bg); }
-  #gtui-buy .it { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--ui-border); }
-  #gtui-buy .it:last-child { border-bottom: 0; }
-  #gtui-buy .it .st { width: 1.2em; text-align: center; color: var(--ui-dim); }
-  #gtui-buy .it .n { flex: 1 1 auto; }
-  #gtui-buy .it b { font-variant-numeric: tabular-nums; }
-  #gtui-buy .it.cur { background: rgba(var(--ui-accent-rgb), .18); }
-  #gtui-buy .it.ok .st { color: #4ade80; } #gtui-buy .it.bad .st { color: #f87171; } #gtui-buy .it.skip { opacity: .5; }
-  #gtui-buy .msg { margin: 12px 0; font-size: .82rem; color: var(--ui-dim); }
-  #gtui-buy .act { display: flex; justify-content: flex-end; gap: 8px; }
-  #gtui-buy .act button { background: var(--ui-panel-2); color: var(--ui-fg); border: 1px solid var(--ui-border); border-radius: 8px; padding: 6px 16px; cursor: pointer; }
-  #gtui-buy .act button.go { background: var(--ui-accent); color: var(--ui-accent-fg); border-color: var(--ui-accent); font-weight: 700; }
 
   /* ---- QOL pack ---- */
   #gtui-toasts { position: fixed; right: 16px; bottom: 16px; z-index: 2200; display: flex; flex-direction: column; gap: 8px; max-width: min(380px, 92vw); }
@@ -1544,9 +1524,8 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: false, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false, baseLists: false, baseRestock: false, baseCount: '10', fleetCount: '10', baseChatEnabled: false, baseExchangeEnabled: false, baseChatHeight: 'auto', baseExchangeHeight: 'auto', baseChatShare: '60' };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false, baseLists: false, baseRestock: false, baseCount: '10', fleetCount: '10', baseChatEnabled: false, baseExchangeEnabled: false, baseChatHeight: 'auto', baseExchangeHeight: 'auto', baseChatShare: '60' };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
-  if (!sget('gtui:buyall-off', false)) { cfg.buyAll = false; sset('gtui:buyall-off', true); sset('gtui:cfg', cfg); }   // "Buy all" is now opt-in: switch it off once for everyone
   const WALLPAPER_DB = 'gtui-assets';
   let wallpaperUrl = null, wallpaperName = '', wallpaperGeneration = 0;
   function wallpaperDb() {
@@ -2235,7 +2214,6 @@
       [['', 'Auto (by screen)'], ['14', 'Small'], ['16', 'Normal'], ['18', 'Large'], ['20', 'Extra large'], ['22', 'Huge']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.size) === v ? ' selected' : '') + '>' + l + '</option>').join('') +
       '</select></label>' +
       (UPDATE_URL ? '<div class="upd">Sleek UI v' + esc(VERSION) + ' &middot; <button type="button" class="sm" data-a="upd-check">Check for updates</button> <span class="ust"></span></div>' : '<div class="upd">Sleek UI v' + esc(VERSION) + '</div>') +
-      chk('buyAll', 'Enable the wishlist "Buy all" button') +
       '<div class="note">Settings are saved in this browser. <button type="button" class="sm" data-a="set-export">Export</button> <button type="button" class="sm" data-a="set-import">Import</button> <button type="button" class="sm" data-a="reset-all">Reset all</button><input type="file" accept=".json,application/json" data-f="settings" hidden></div>';
   }
   function addBlock(raw) {
@@ -2684,14 +2662,9 @@
     document.body.appendChild(d);
   }
 
-  /* ---------- Exchange: "Buy all" for the wishlist ----------
-     Drives the game's own UI one item at a time (click the wishlist row -> the game fills the quantity -> click its Buy button),
-     after an explicit confirmation. Stops on any error, an unexpected dialog, or when you press Stop. */
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  async function waitFor(fn, ms, step) {
-    const t0 = Date.now();
-    while (Date.now() - t0 < (ms || 4000)) { const v = fn(); if (v) return v; await sleep(step || 30); }
-    return null;
+  function setNum(inp, v) {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(inp, String(v));
+    inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true }));
   }
   function cleanName(td) { if (!td) return ''; const c = td.cloneNode(true); c.querySelectorAll('.gtui-wp').forEach((n) => n.remove()); return c.textContent.trim().replace(/\s+/g, ' '); }
   const wishPanel = () => document.getElementById('exchangeMaterialsPanel');
@@ -2702,96 +2675,6 @@
       const inp = el.querySelector('input[type="number"]');
       return { el, name: cleanName(el.querySelector('td')), qty: inp ? parseInt(inp.value, 10) || 0 : 0 };
     }).filter((r) => r.name && r.qty > 0);
-  }
-  const tradeName = () => { const h = document.querySelector('#exchangeTradeMatCard .card-header .h5'); return h ? h.textContent.trim() : ''; };
-  function setNum(inp, v) {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(inp, String(v));
-    inp.dispatchEvent(new Event('input', { bubbles: true })); inp.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-  const toastCount = () => document.querySelectorAll('.toast-container .toast').length;
-  let buyRun = null;
-
-  function ensureBuyAll() {
-    const p = wishPanel();
-    let b = document.getElementById('gtui-buyall');
-    const grp = p && p.querySelector('.input-group');
-    if (!cfg.buyAll || !p || !wishActive() || !grp || !wishRows().length) { if (b) b.remove(); return; }
-    if (!b) {
-      b = document.createElement('button');
-      b.id = 'gtui-buyall'; b.type = 'button'; b.title = 'Buy every item on this wishlist';
-      b.textContent = 'Buy all';
-      b.addEventListener('click', openBuyAll);
-    }
-    if (b.parentElement !== grp) grp.appendChild(b);
-  }
-
-  function buyDialog() {
-    let d = document.getElementById('gtui-buy');
-    if (!d) {
-      d = document.createElement('div'); d.id = 'gtui-buy';
-      document.body.appendChild(d);
-      d.addEventListener('click', (e) => {
-        const a = e.target.closest('[data-a]'); if (!a) { if (e.target === d && !buyRun) d.classList.remove('open'); return; }
-        if (a.dataset.a === 'cancel') d.classList.remove('open');
-        else if (a.dataset.a === 'go') runBuyAll();
-        else if (a.dataset.a === 'stop') { if (buyRun) buyRun.stop = true; }
-      });
-    }
-    return d;
-  }
-  function openBuyAll() {
-    const rows = wishRows(); if (!rows.length) return;
-    const d = buyDialog();
-    const est = wishEstimate(rows);
-    const cost = [...wishPanel().querySelectorAll('.input-group-text span')].map((x) => x.textContent.trim().replace(/\s+/g, ' ')).join('  ·  ');
-    d.innerHTML = '<div class="box"><h3>Buy everything on this wishlist?</h3>' +
-      '<div class="sub">' + esc(cost) + '</div>' +
-      (est.low ? '<div class="sub">≈ ' + money(est.low) + '$ at the lowest offers now' + (est.avg ? '  (average-price total ' + money(est.avg) + '$)' : '') + (est.miss ? '  ·  ' + est.miss + ' item(s) without a price' : '') + '</div>' : '') +
-      '<div class="lst">' + rows.map((r, i) => '<div class="it" data-i="' + i + '"><span class="st">·</span><span class="n">' + esc(r.name) + '</span><b>' + r.qty.toLocaleString() + '</b></div>').join('') + '</div>' +
-      '<div class="msg">Items are bought one after another using the game\'s own Buy button, at the current best offers. You can stop at any time; anything already bought stays bought.</div>' +
-      '<div class="act"><button type="button" data-a="cancel">Cancel</button><button type="button" class="go" data-a="go">Buy ' + rows.length + ' item' + (rows.length > 1 ? 's' : '') + '</button></div></div>';
-    d.dataset.snap = JSON.stringify(rows.map((r) => ({ name: r.name, qty: r.qty })));
-    d.classList.add('open');
-  }
-  async function runBuyAll() {
-    const d = buyDialog(); if (buyRun) return;
-    const snap = JSON.parse(d.dataset.snap || '[]');
-    buyRun = { stop: false };
-    d.querySelector('.act').innerHTML = '<button type="button" data-a="stop">Stop</button>';
-    d.querySelector('.msg').textContent = 'Buying… keep this tab open.';
-    const mark = (i, ch, cls) => { const it = d.querySelector('.it[data-i="' + i + '"]'); if (it) { it.querySelector('.st').textContent = ch; it.className = 'it ' + (cls || ''); } };
-    let bought = 0, why = '';
-    for (let i = 0; i < snap.length && !buyRun.stop; i++) {
-      const it = snap[i];
-      mark(i, '…', 'cur');
-      if (document.querySelector('.modal.show')) { why = 'A dialog opened - stopped.'; break; }
-      // 1) open the item from the wishlist (the game fills in the quantity itself)
-      const row = wishRows().find((r) => r.name === it.name);
-      if (!row) { mark(i, '–', 'skip'); continue; }   // gone already
-      (row.el.querySelector('td') || row.el).click();
-      const ok = await waitFor(() => tradeName() === it.name, 3000);
-      if (!ok) { mark(i, '✕', 'bad'); why = 'Could not open ' + it.name + '.'; break; }
-      const q = await waitFor(() => document.getElementById('inputQuantity'), 1500);
-      if (!q) { mark(i, '✕', 'bad'); why = 'Trade card not found.'; break; }
-      await waitFor(() => parseInt(q.value, 10) === it.qty, 500);   // the game fills the quantity in itself
-      if (parseInt(q.value, 10) !== it.qty) { setNum(q, it.qty); await sleep(80); }
-      if (parseInt(q.value, 10) !== it.qty) { mark(i, '✕', 'bad'); why = 'Could not set the quantity for ' + it.name + '.'; break; }
-      const btn = document.getElementById('exBuyButton');
-      if (!btn || btn.disabled) { mark(i, '✕', 'bad'); why = 'Buy is not available for ' + it.name + '.'; break; }
-      // 2) press the game's Buy button and watch for the result
-      const before = toastCount(), toastsBefore = new Set(document.querySelectorAll('.toast-container .toast'));
-      btn.click();
-      await waitFor(() => toastCount() > before || document.querySelector('.modal.show'), 2200, 25);
-      await sleep(120);
-      const fresh = [...document.querySelectorAll('.toast-container .toast')].filter((t) => !toastsBefore.has(t));
-      const bad = fresh.find((t) => /danger|error/.test(t.className) || /not enough|insufficient|cannot|can't|failed|error|no offers|too late/i.test(t.textContent));
-      if (bad || document.querySelector('.modal.show')) { mark(i, '✕', 'bad'); why = bad ? bad.textContent.trim().replace(/\s+/g, ' ').slice(0, 140) : 'A dialog opened - stopped.'; break; }
-      mark(i, '✓', 'ok'); bought++;
-    }
-    if (buyRun.stop && !why) why = 'Stopped.';
-    d.querySelector('.msg').textContent = (why ? why + ' ' : '') + bought + ' of ' + snap.length + ' bought.';
-    d.querySelector('.act').innerHTML = '<button type="button" class="go" data-a="cancel">Close</button>';
-    buyRun = null;
   }
 
   /* ================= QOL pack: alerts, quick buy, wishlist prices, mentions, chat tools, profit calculator ================= */
@@ -3012,7 +2895,7 @@
     if (EMBED || !cfg.numKeys || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !/^[1-9]$/.test(e.key)) return;
     const t = e.target;
     if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
-    if (document.querySelector('.modal.show, #gtui-pal.open, #gtui-buy.open, #gtui-profit.open')) return;
+    if (document.querySelector('.modal.show, #gtui-pal.open, #gtui-profit.open')) return;
     const links = [...document.querySelectorAll('#app > nav.navbar .navbar-menu > .nav-link')].filter((a) => !/^gtui-/.test(a.id));
     const l = links[+e.key - 1];
     if (l) { l.click(); e.preventDefault(); }
@@ -3095,9 +2978,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.62';
+  const VERSION = '0.9.63';
   const CHANGELOG = {
-    '0.9.62': ['"Buy all" on the wishlist is now off by default and no longer in the normal settings; the tick box is under "Check for updates"'],
+    '0.9.63': ['Removed the wishlist "Buy all" button completely'],
     '0.9.61': ['Base page extras (thanks YeoZn), all optional and off by default in Settings → Base page: collapsible Bases/Fleet lists, Restock times, chat and Exchange panels. Also Settings → Background image. Pasteimg previews are a separate optional script'],
     '0.9.60': ['Click anywhere on the Bases header to collapse or expand the list'],
     '0.9.59': ['Fleet list can be collapsed and scrolled; choose how many ships are visible in Settings'],
@@ -3113,10 +2996,7 @@
     '0.9.47': ['Multi-chat now lives inside Comms: press "⊞ Multi-chat" in the chat header'],
     '0.9.45': ['Multi-chat: several channels side by side'],
     '0.9.44': ['This "What\'s new" bar - dismiss it and it stays away until the next update'],
-    '0.9.43': ['Price alerts: press 🔔 Alert on any Exchange item', 'Quick ¼ / ½ / Max buttons on the buy form', 'Wishlist: prices next to items and an estimate in Buy all', 'Chat: mention highlights, a filter box, and lighter history that loads more as you scroll up', 'Production profit calculator (Profit in the sidebar)', 'Number keys 1-9, row density, export/import all settings'],
-    '0.9.42': ['Setting to hide the wishlist "Buy all" button'],
-    '0.9.41': ['Faster "Buy all"'],
-    '0.9.40': ['"Buy all" button on the Exchange wishlist'],
+    '0.9.43': ['Price alerts: press 🔔 Alert on any Exchange item', 'Quick ¼ / ½ / Max buttons on the buy form', 'Wishlist: prices next to items', 'Chat: mention highlights, a filter box, and lighter history that loads more as you scroll up', 'Production profit calculator (Profit in the sidebar)', 'Number keys 1-9, row density, export/import all settings'],
     '0.9.39': ['The purple theme is now called LLM Purple'],
     '0.9.38': ['Chicken Chaos themes, from the TiT Race site'],
     '0.9.37': ['Material Design look & feel, plus Material Dark / Light themes'],
@@ -3263,7 +3143,6 @@
     learnChannels(); ensureMulti();
     syncNewBar();
     ensureProfitNav(); syncQuick(); syncWishPrices(); syncMentions(); ensureChatFilter(); applyChatFilter(); syncHistory();
-    ensureBuyAll();
     ensureChickens();
     ensureKeys();
     syncCompactBits();
