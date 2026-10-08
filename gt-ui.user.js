@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Galactic Tycoons – Sleek UI
 // @namespace    https://github.com/Lloir/ef
-// @version      0.9.61
+// @version      0.9.62
 // @description  Sidebar navigation, EVE-style market layout, command palette, Base dashboard, responsive layout for Galactic Tycoons
 // @match        https://galactictycoons.com/*
 // @match        https://*.galactictycoons.com/*
@@ -1544,8 +1544,9 @@
     chicklight: { name: 'Chicken Chaos (Light)', mat: true, chick: true, bg: '#d9c48f', panel: '#e2cf9a', p2: '#d2bc7f', border: '#b9a45f', fg: '#1f1700', dim: '#4a3c10', accent: '#8a4300' },
     midnight: { name: 'Midnight', bg: '#000000', panel: '#08080d', p2: '#101018', border: '#24243a', fg: '#e2e2f0', dim: '#8888a4', accent: '#a78bfa' },
   };
-  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: true, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false, baseLists: false, baseRestock: false, baseCount: '10', fleetCount: '10', baseChatEnabled: false, baseExchangeEnabled: false, baseChatHeight: 'auto', baseExchangeHeight: 'auto', baseChatShare: '60' };
+  const CFG_DEFAULT = { theme: 'nebula', accent: '', hideAvatars: false, hideLogos: false, hidePortraits: false, size: '', side: 'left', quick: 'row', showLinks: true, showStats: true, showPills: true, translate: false, tlang: 'en', outlang: 'es', chanMode: 'full', blocked: [], saved: [], slSpacing: false, multiEnabled: true, multiOn: false, buyAll: false, alerts: [], quickQty: true, wishPrices: true, favFirst: true, mentions: '', sound: false, density: 'normal', numKeys: true, histN: 200, style: 'default', showKeys: true, chatMax: '', chatSide: 'left', hideContacts: false, baseLists: false, baseRestock: false, baseCount: '10', fleetCount: '10', baseChatEnabled: false, baseExchangeEnabled: false, baseChatHeight: 'auto', baseExchangeHeight: 'auto', baseChatShare: '60' };
   let cfg = Object.assign({}, CFG_DEFAULT, sget('gtui:cfg', {}));
+  if (!sget('gtui:buyall-off', false)) { cfg.buyAll = false; sset('gtui:buyall-off', true); sset('gtui:cfg', cfg); }   // "Buy all" is now opt-in: switch it off once for everyone
   const WALLPAPER_DB = 'gtui-assets';
   let wallpaperUrl = null, wallpaperName = '', wallpaperGeneration = 0;
   function wallpaperDb() {
@@ -2201,7 +2202,6 @@
       '<div class="note">Tip: end a message with a tag like <b>:fr</b> or <b>:de</b> and it is translated when you press Enter.</div>' +
       '<div class="note">Translation sends message text to Google Translate (Chrome 138+ translates on-device instead). Off by default.</div>' +
       '<div class="sec">Exchange</div>' +
-      chk('buyAll', 'Show "Buy all" button on the wishlist') +
       chk('quickQty', 'Quick quantity buttons (¼ ½ Max) on the buy form') +
       chk('wishPrices', 'Show prices next to wishlist items') +
       chk('favFirst', 'Favourites first in the market list') +
@@ -2235,6 +2235,7 @@
       [['', 'Auto (by screen)'], ['14', 'Small'], ['16', 'Normal'], ['18', 'Large'], ['20', 'Extra large'], ['22', 'Huge']].map(([v, l]) => '<option value="' + v + '"' + (String(cfg.size) === v ? ' selected' : '') + '>' + l + '</option>').join('') +
       '</select></label>' +
       (UPDATE_URL ? '<div class="upd">Sleek UI v' + esc(VERSION) + ' &middot; <button type="button" class="sm" data-a="upd-check">Check for updates</button> <span class="ust"></span></div>' : '<div class="upd">Sleek UI v' + esc(VERSION) + '</div>') +
+      chk('buyAll', 'Enable the wishlist "Buy all" button') +
       '<div class="note">Settings are saved in this browser. <button type="button" class="sm" data-a="set-export">Export</button> <button type="button" class="sm" data-a="set-import">Import</button> <button type="button" class="sm" data-a="reset-all">Reset all</button><input type="file" accept=".json,application/json" data-f="settings" hidden></div>';
   }
   function addBlock(raw) {
@@ -3094,8 +3095,9 @@
   }
 
   /* ---------- "What's new" bar ---------- */
-  const VERSION = '0.9.61';
+  const VERSION = '0.9.62';
   const CHANGELOG = {
+    '0.9.62': ['"Buy all" on the wishlist is now off by default and no longer in the normal settings; the tick box is under "Check for updates"'],
     '0.9.61': ['Base page extras (thanks YeoZn), all optional and off by default in Settings → Base page: collapsible Bases/Fleet lists, Restock times, chat and Exchange panels. Also Settings → Background image. Pasteimg previews are a separate optional script'],
     '0.9.60': ['Click anywhere on the Bases header to collapse or expand the list'],
     '0.9.59': ['Fleet list can be collapsed and scrolled; choose how many ships are visible in Settings'],
